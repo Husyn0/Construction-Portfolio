@@ -11,6 +11,7 @@
 /backend/migrations
 /backend/vendor/
 /backend/composer.lock
+/backend/uploads
 
 #Data samples
 /data-samples
