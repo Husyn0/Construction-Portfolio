@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS analytics_events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    visitor_id VARCHAR(255) NOT NULL,
+    session_id VARCHAR(255),
+    event_type VARCHAR(50) NOT NULL,
+    event_data JSON,
+    url TEXT,
+    referrer TEXT,
+    user_agent TEXT,
+    ip VARCHAR(45),
+    country VARCHAR(100),
+    city VARCHAR(100),
+    device_type VARCHAR(50),
+    browser VARCHAR(50),
+    os VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_visitor (visitor_id),
+    INDEX idx_created (created_at),
+    INDEX idx_type (event_type),
+    INDEX idx_country (country)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

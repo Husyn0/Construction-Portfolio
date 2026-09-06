@@ -18,10 +18,22 @@ const ServiceEditor = ({ data, onChange }) => {
 
   useEffect(() => {
     if (data) {
+      let servicesArray = [];
+      
+      if (data.services && Array.isArray(data.services)) {
+        servicesArray = data.services;
+      } else if (data.data && Array.isArray(data.data)) {
+        servicesArray = data.data;
+      } else if (Array.isArray(data)) {
+        servicesArray = data;
+      } else if (data.items && Array.isArray(data.items)) {
+        servicesArray = data.items;
+      }
+
       setFormData(prev => ({
         ...defaultData,
         ...data,
-        services: data.services || []
+        services: servicesArray
       }));
     }
   }, [data]);

@@ -36,6 +36,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
+
+
+
+// Serve static files from uploads directory
+$requestUri = $_SERVER['REQUEST_URI'];
+if (strpos($requestUri, '/uploads/') === 0) {
+    $filePath = __DIR__ . $requestUri;
+    
+    // Security: Prevent directory traversal
+    $realPath = realpath($filePath);
+    $uploadsDir = realpath(__DIR__ . '/uploads');
+    
+    if ($realPath && strpos($realPath, $uploadsDir) === 0 && file_exists($realPath)) {
+        // Get file extension and set appropriate content type
+        $extension = pathinfo($realPath, PATHINFO_EXTENSION);
+        $contentType = 'application/octet-stream';
+        
+        switch (strtolower($extension)) {
+            case 'jpg':
+            case 'jpeg':
+                $contentType = 'image/jpeg';
+                break;
+            case 'png':
+                $contentType = 'image/png';
+                break;
+            case 'gif':
+                $contentType = 'image/gif';
+                break;
+            case 'webp':
+                $contentType = 'image/webp';
+                break;
+            case 'svg':
+                $contentType = 'image/svg+xml';
+                break;
+        }
+        
+        header('Content-Type: ' . $contentType);
+        header('Content-Length: ' . filesize($realPath));
+        readfile($realPath);
+        exit();
+    } else {
+        http_response_code(404);
+        echo 'File not found';
+        exit();
+    }
+}
+
+
+
 // Initialize router
 $router = new App\Routes\Router();
 

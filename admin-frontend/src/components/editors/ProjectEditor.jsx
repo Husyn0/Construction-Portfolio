@@ -16,10 +16,30 @@ const ProjectEditor = ({ data, onChange }) => {
 
   useEffect(() => {
     if (data) {
+      // Ensure projects is always an array
+      let projectsArray = [];
+      
+      // Check if data.projects exists and is an array
+      if (data.projects && Array.isArray(data.projects)) {
+        projectsArray = data.projects;
+      } 
+      // Check if data.data exists and is an array (API might return data in a 'data' field)
+      else if (data.data && Array.isArray(data.data)) {
+        projectsArray = data.data;
+      }
+      // Check if data itself is an array (API might return projects directly)
+      else if (Array.isArray(data)) {
+        projectsArray = data;
+      }
+      // Check if data has items property
+      else if (data.items && Array.isArray(data.items)) {
+        projectsArray = data.items;
+      }
+      
       setFormData(prev => ({
         ...defaultData,
         ...data,
-        projects: data.projects || []
+        projects: projectsArray
       }));
     }
   }, [data]);
@@ -31,7 +51,10 @@ const ProjectEditor = ({ data, onChange }) => {
   };
 
   const handleProjectChange = (index, field, value) => {
-    const updatedProjects = [...formData.projects];
+    const updatedProjects = [...(formData.projects || [])];
+    if (!updatedProjects[index]) {
+      updatedProjects[index] = {};
+    }
     updatedProjects[index] = { ...updatedProjects[index], [field]: value };
     const updated = { ...formData, projects: updatedProjects };
     setFormData(updated);
@@ -39,7 +62,10 @@ const ProjectEditor = ({ data, onChange }) => {
   };
 
   const handleProjectImageChange = (index, path, filename, uploadResult) => {
-    const updatedProjects = [...formData.projects];
+    const updatedProjects = [...(formData.projects || [])];
+    if (!updatedProjects[index]) {
+      updatedProjects[index] = {};
+    }
     updatedProjects[index] = { 
       ...updatedProjects[index], 
       project_image: path,
@@ -52,7 +78,10 @@ const ProjectEditor = ({ data, onChange }) => {
   };
 
   const handleProjectAltTextChange = (index, value) => {
-    const updatedProjects = [...formData.projects];
+    const updatedProjects = [...(formData.projects || [])];
+    if (!updatedProjects[index]) {
+      updatedProjects[index] = {};
+    }
     updatedProjects[index] = { 
       ...updatedProjects[index], 
       project_image_alt: value 
@@ -63,7 +92,10 @@ const ProjectEditor = ({ data, onChange }) => {
   };
 
   const addTag = (projectIndex, tag) => {
-    const updatedProjects = [...formData.projects];
+    const updatedProjects = [...(formData.projects || [])];
+    if (!updatedProjects[projectIndex]) {
+      updatedProjects[projectIndex] = { tags: [] };
+    }
     if (!updatedProjects[projectIndex].tags) {
       updatedProjects[projectIndex].tags = [];
     }
@@ -74,15 +106,17 @@ const ProjectEditor = ({ data, onChange }) => {
   };
 
   const removeTag = (projectIndex, tagIndex) => {
-    const updatedProjects = [...formData.projects];
-    updatedProjects[projectIndex].tags = updatedProjects[projectIndex].tags.filter((_, i) => i !== tagIndex);
-    const updated = { ...formData, projects: updatedProjects };
-    setFormData(updated);
-    onChange(updated);
+    const updatedProjects = [...(formData.projects || [])];
+    if (updatedProjects[projectIndex] && updatedProjects[projectIndex].tags) {
+      updatedProjects[projectIndex].tags = updatedProjects[projectIndex].tags.filter((_, i) => i !== tagIndex);
+      const updated = { ...formData, projects: updatedProjects };
+      setFormData(updated);
+      onChange(updated);
+    }
   };
 
   const addProject = () => {
-    const updatedProjects = [...formData.projects, { 
+    const updatedProjects = [...(formData.projects || []), { 
       title: '', 
       location: '', 
       category: '', 
@@ -105,6 +139,28 @@ const ProjectEditor = ({ data, onChange }) => {
 
   const [newTag, setNewTag] = useState('');
 
+  // If formData.projects is not an array, show a loading/error state
+  if (!formData.projects || !Array.isArray(formData.projects)) {
+    return (
+      <div className="editor-section">
+        <h3>Projects Section Content</h3>
+        <div className="editor-error">
+          <p>⚠️ Projects data is not available or in an invalid format.</p>
+          <button 
+            type="button" 
+            onClick={() => {
+              // Initialize with empty array
+              setFormData(prev => ({ ...prev, projects: [] }));
+            }}
+            className="add-btn"
+          >
+            <FaPlus /> Initialize Projects
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="editor-section">
       <h3>Projects Section Content</h3>
@@ -112,14 +168,14 @@ const ProjectEditor = ({ data, onChange }) => {
       <div className="editor-grid">
         <InputField
           label="Section Title"
-          value={formData.title}
+          value={formData.title || ''}
           onChange={(val) => handleChange('title', val)}
           placeholder="Featured Projects"
         />
 
         <TextAreaField
           label="Section Subtitle"
-          value={formData.subtitle}
+          value={formData.subtitle || ''}
           onChange={(val) => handleChange('subtitle', val)}
           placeholder="Explore our portfolio of exceptional construction projects..."
           rows={2}
@@ -127,7 +183,7 @@ const ProjectEditor = ({ data, onChange }) => {
 
         <div className="projects-editor">
           <div className="projects-header">
-            <label>Projects List</label>
+            <label>Projects List ({formData.projects.length})</label>
             <button type="button" onClick={addProject} className="add-btn">
               <FaPlus /> Add Project
             </button>
@@ -151,19 +207,19 @@ const ProjectEditor = ({ data, onChange }) => {
 
                 <InputField
                   label="Project Title"
-                  value={project.title}
+                  value={project.title || ''}
                   onChange={(val) => handleProjectChange(index, 'title', val)}
                   placeholder="Riverside Tower"
                 />
                 <InputField
                   label="Location"
-                  value={project.location}
+                  value={project.location || ''}
                   onChange={(val) => handleProjectChange(index, 'location', val)}
                   placeholder="Austin, TX"
                 />
                 <InputField
                   label="Category"
-                  value={project.category}
+                  value={project.category || ''}
                   onChange={(val) => handleProjectChange(index, 'category', val)}
                   placeholder="Commercial"
                 />

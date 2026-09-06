@@ -1,5 +1,5 @@
-// admin-frontend/src/pages/ContentManager.jsx (was Dashboard.jsx)
-import React, { useState, useEffect } from 'react';
+// admin-frontend/src/pages/ContentManager.jsx
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
 import ContentEditor from '../components/ContentEditor';
 import { fetchContent, saveContent } from '../api/contentApi';
@@ -12,8 +12,13 @@ const ContentManager = ({ onLogout, onBack }) => {
   const [loading, setLoading] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const saveTimeoutRef = useRef(null);
 
-  const getDefaultContent = (section) => {
+  // Get default content for each section
+  const getDefaultContent = useCallback((section) => {
     const defaults = {
       hero: {
         badge: '2026 Award Winner',
@@ -70,54 +75,181 @@ const ContentManager = ({ onLogout, onBack }) => {
       }
     };
     return defaults[section] || {};
-  };
+  }, []);
 
-  useEffect(() => {
-    const loadContent = async () => {
-      setIsLoading(true);
-      try {
-        const data = await fetchContent(activeSection);
+  // Load content for the active section
+  const loadContent = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    setSaveMessage('');
+    
+    try {
+      const data = await fetchContent(activeSection);
+      
+      // Validate the data structure
+      if (data && typeof data === 'object') {
+        // Ensure arrays exist for sections that need them
+        const validatedData = { ...data };
+        
+        // For sections that require arrays, ensure they exist
+        if (['services', 'projects', 'team'].includes(activeSection)) {
+          const arrayField = activeSection === 'team' ? 'members' : activeSection;
+          if (!validatedData[arrayField] || !Array.isArray(validatedData[arrayField])) {
+            const defaultData = getDefaultContent(activeSection);
+            validatedData[arrayField] = defaultData[arrayField] || [];
+          }
+        }
+        
         setContent(prev => ({
           ...prev,
-          [activeSection]: data
+          [activeSection]: validatedData
         }));
-      } catch (error) {
-        console.error('Error loading content:', error);
-        setContent(prev => ({
-          ...prev,
-          [activeSection]: getDefaultContent(activeSection)
-        }));
-        setSaveMessage('⚠️ Using default content - API connection issue');
-        setTimeout(() => setSaveMessage(''), 4000);
-      } finally {
-        setIsLoading(false);
+        setHasUnsavedChanges(false);
+      } else {
+        throw new Error('Invalid data structure received from API');
       }
-    };
-    loadContent();
-  }, [activeSection]);
+    } catch (error) {
+      console.error('Error loading content:', error);
+      
+      // Use default content as fallback
+      const defaultData = getDefaultContent(activeSection);
+      setContent(prev => ({
+        ...prev,
+        [activeSection]: defaultData
+      }));
+      
+      const errorMessage = error.message || 'Unknown error';
+      setError(`⚠️ Using default content - ${errorMessage}`);
+      setSaveMessage('⚠️ Using default content - API connection issue');
+      
+      // Clear the error message after 5 seconds
+      setTimeout(() => {
+        setSaveMessage('');
+      }, 5000);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeSection, getDefaultContent]);
 
-  const handleContentChange = (section, data) => {
+  // Load content when section changes
+  useEffect(() => {
+    loadContent();
+  }, [loadContent]);
+
+  // Handle content changes from editor
+  const handleContentChange = useCallback((section, data) => {
+    if (!data || typeof data !== 'object') {
+      console.warn('Invalid data received in handleContentChange');
+      return;
+    }
+
     setContent(prev => ({
       ...prev,
       [section]: data
     }));
-  };
+    setHasUnsavedChanges(true);
+    setError(null);
+    
+    // Clear any existing save message
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    setSaveMessage('');
+  }, []);
 
+  // Save content
   const handleSave = async () => {
+    if (!content[activeSection]) {
+      setSaveMessage('❌ No content to save');
+      setTimeout(() => setSaveMessage(''), 3000);
+      return;
+    }
+
     setLoading(true);
     setSaveMessage('');
-    
+    setError(null);
+
     try {
-      await saveContent(activeSection, content[activeSection]);
+      const currentData = content[activeSection];
+      
+      // Validate data before saving
+      if (typeof currentData !== 'object' || currentData === null) {
+        throw new Error('Invalid data structure');
+      }
+
+      // For array-based sections, ensure the array exists
+      if (['services', 'projects', 'team'].includes(activeSection)) {
+        const arrayField = activeSection === 'team' ? 'members' : activeSection;
+        if (!currentData[arrayField] || !Array.isArray(currentData[arrayField])) {
+          throw new Error(`Invalid ${arrayField} data: must be an array`);
+        }
+      }
+
+      await saveContent(activeSection, currentData);
+      setHasUnsavedChanges(false);
       setSaveMessage('✅ Content saved successfully!');
-      setTimeout(() => setSaveMessage(''), 3000);
+      
+      // Clear success message after 3 seconds
+      saveTimeoutRef.current = setTimeout(() => {
+        setSaveMessage('');
+      }, 3000);
     } catch (error) {
-      setSaveMessage('❌ Error saving content. Please try again.');
-      setTimeout(() => setSaveMessage(''), 3000);
+      console.error('Save error:', error);
+      const errorMessage = error.message || 'Unknown error occurred';
+      setError(`❌ Error saving ${activeSection}: ${errorMessage}`);
+      setSaveMessage(`❌ Error saving content: ${errorMessage}`);
+      
+      // Clear error message after 5 seconds
+      saveTimeoutRef.current = setTimeout(() => {
+        setSaveMessage('');
+      }, 5000);
     } finally {
       setLoading(false);
     }
   };
+
+  // Handle section change
+  const handleSectionChange = useCallback((sectionId) => {
+    // Check for unsaved changes before switching
+    if (hasUnsavedChanges) {
+      if (!window.confirm('You have unsaved changes. Are you sure you want to switch sections without saving?')) {
+        return;
+      }
+    }
+    setActiveSection(sectionId);
+    setError(null);
+    setSaveMessage('');
+  }, [hasUnsavedChanges]);
+
+  // Handle keyboard shortcuts (Ctrl+S to save)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleSave]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Retry loading content
+  const handleRetry = useCallback(() => {
+    setRetryCount(prev => prev + 1);
+    loadContent();
+  }, [loadContent]);
 
   const sections = [
     { id: 'hero', label: 'Hero Section', icon: 'fa-star' },
@@ -135,7 +267,7 @@ const ContentManager = ({ onLogout, onBack }) => {
       <Sidebar 
         sections={sections} 
         activeSection={activeSection}
-        onSectionChange={setActiveSection}
+        onSectionChange={handleSectionChange}
         onLogout={onLogout}
       />
       
@@ -150,6 +282,9 @@ const ContentManager = ({ onLogout, onBack }) => {
               <i className={`fas ${currentSection?.icon}`}></i>
               Edit {currentSection?.label}
             </h2>
+            {hasUnsavedChanges && (
+              <span className="unsaved-indicator">● Unsaved changes</span>
+            )}
           </div>
           <div className="header-actions">
             {saveMessage && (
@@ -177,19 +312,53 @@ const ContentManager = ({ onLogout, onBack }) => {
           </div>
         </div>
 
+        {error && (
+          <div className="error-banner">
+            <span>{error}</span>
+            {error.includes('API connection') && (
+              <button onClick={handleRetry} className="retry-btn">
+                <GoSync size={14} /> Retry
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="editor-container">
           {isLoading ? (
             <div className="loading-spinner">
               <GoSync className="spinning" size={32} />
-              Loading content...
+              <p>Loading content...</p>
             </div>
           ) : (
             <ContentEditor 
               section={activeSection}
-              content={content[activeSection] || {}}
-              onContentChange={(data) => handleContentChange(activeSection, data)}
+              content={content[activeSection] || getDefaultContent(activeSection)}
+              onContentChange={handleContentChange}
             />
           )}
+        </div>
+
+        {/* Quick info bar */}
+        <div className="editor-footer">
+          <div className="editor-info">
+            <span className="section-info">
+              Editing: <strong>{currentSection?.label}</strong>
+            </span>
+            {hasUnsavedChanges && (
+              <span className="unsaved-status">⚠️ Unsaved changes</span>
+            )}
+            <span className="keyboard-hint">
+              Press <kbd>Ctrl+S</kbd> to save
+            </span>
+          </div>
+          <div className="editor-stats">
+            <span className="char-count">
+              {content[activeSection] ? 
+                `${JSON.stringify(content[activeSection]).length} characters` : 
+                'No content'
+              }
+            </span>
+          </div>
         </div>
       </div>
     </div>

@@ -15,10 +15,24 @@ const TeamEditor = ({ data, onChange }) => {
 
   useEffect(() => {
     if (data) {
+      
+      // Ensure members is always an array
+      let membersArray = [];
+      
+      if (data.members && Array.isArray(data.members)) {
+        membersArray = data.members;
+      } else if (data.data && Array.isArray(data.data)) {
+        membersArray = data.data;
+      } else if (Array.isArray(data)) {
+        membersArray = data;
+      } else if (data.items && Array.isArray(data.items)) {
+        membersArray = data.items;
+      }
+
       setFormData(prev => ({
         ...defaultData,
         ...data,
-        members: data.members || []
+        members: membersArray
       }));
     }
   }, [data]);

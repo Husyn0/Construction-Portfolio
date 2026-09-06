@@ -40,7 +40,9 @@ const ImageUpload = ({
       const result = await uploadImage(section, file, field);
       
       if (result && result.path) {
-        setPreview(result.url || result.path);
+        // Store the path as returned by the API (relative path)
+        setPreview(result.path);
+        // Pass the relative path to parent
         onImageChange(result.path, file.name, result);
       }
     } catch (error) {
@@ -79,13 +81,38 @@ const ImageUpload = ({
     fileInputRef.current?.click();
   };
 
+  // Fix: Get the correct image URL
   const getImageUrl = (path) => {
     if (!path) return null;
+    
+    // If it's already a full URL, return it
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return path;
     }
+    
+    // Remove any /api/v1 prefix if present
+    let cleanPath = path;
+    if (cleanPath.startsWith('/api/v1')) {
+      cleanPath = cleanPath.replace('/api/v1', '');
+    }
+    
+    // Ensure the path starts with /uploads
+    if (!cleanPath.startsWith('/uploads')) {
+      // If it's just a filename, add /uploads/ prefix
+      if (!cleanPath.includes('/')) {
+        cleanPath = `/uploads/${cleanPath}`;
+      } else {
+        // If it has a path but not /uploads, add it
+        cleanPath = `/uploads/${cleanPath.replace(/^\/+/, '')}`;
+      }
+    }
+    
+    // Get the base URL (without /api/v1)
     const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-    return `${baseUrl}${path}`;
+    // Remove /api/v1 if present in baseUrl
+    const cleanBaseUrl = baseUrl.replace(/\/api\/v1$/, '');
+    
+    return `${cleanBaseUrl}${cleanPath}`;
   };
 
   // Get the display name from mapping if available
@@ -111,7 +138,21 @@ const ImageUpload = ({
 
         {preview || currentImage ? (
           <div className="image-preview">
-            <img src={getImageUrl(preview || currentImage)} alt={getDisplayName()} />
+            <img 
+              src={getImageUrl(preview || currentImage)} 
+              alt={getDisplayName()}
+              onError={(e) => {
+                // Fallback if image fails to load
+                console.error('Failed to load image:', e.target.src);
+                e.target.style.display = 'none';
+                // Show placeholder
+                const parent = e.target.parentElement;
+                const placeholder = document.createElement('div');
+                placeholder.className = 'image-placeholder';
+                placeholder.innerHTML = '<p>⚠️ Image not found</p>';
+                parent.appendChild(placeholder);
+              }}
+            />
             <div className="image-actions">
               <button 
                 type="button" 

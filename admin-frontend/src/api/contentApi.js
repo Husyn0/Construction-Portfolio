@@ -11,21 +11,84 @@ const headers = () => {
   };
 };
 
+// Helper to determine if a section uses separate endpoints
+const usesSeparateEndpoints = (section) => {
+  return ['projects', 'services', 'team'].includes(section);
+};
+
+// Helper to get the correct endpoint
+const getEndpoint = (section, action = '') => {
+  if (usesSeparateEndpoints(section)) {
+    return `${API_URL}/${section}${action}`;
+  }
+  return `${API_URL}/content/${section}${action}`;
+};
+
 export const fetchContent = async (section) => {
   try {
-    const response = await fetch(`${API_URL}/content/${section}`, {
-      headers: headers()
-    });
+    let response;
+    const endpoint = getEndpoint(section);
     
-    if (!response.ok) {
-      throw new Error('Failed to fetch content');
+    // For separate endpoints (projects, services, team)
+    if (usesSeparateEndpoints(section)) {
+      response = await fetch(endpoint, {
+        headers: headers()
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${section}`);
+      }
+      
+      const result = await response.json();
+
+      // Handle different response structures
+      let sectionData = [];
+      let title = '';
+      let subtitle = '';
+      
+      // If the response has a data property that's an array
+      if (result.data && Array.isArray(result.data)) {
+        sectionData = result.data;
+      } 
+      // If the response itself is the array (some APIs return array directly)
+      else if (Array.isArray(result)) {
+        sectionData = result;
+      }
+      // If the response has items or the section name as property
+      else if (result[section] && Array.isArray(result[section])) {
+        sectionData = result[section];
+      }
+      // If the response has a 'items' property
+      else if (result.items && Array.isArray(result.items)) {
+        sectionData = result.items;
+      }
+      
+      // Get title and subtitle if they exist
+      if (result.title) title = result.title;
+      if (result.subtitle) subtitle = result.subtitle;
+
+      // Return in the format expected by the editors
+      return {
+        title: title,
+        subtitle: subtitle,
+        [section]: sectionData
+      };
+    } else {
+      // For content sections (hero, about, contact)
+      response = await fetch(`${API_URL}/content/${section}`, {
+        headers: headers()
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch content');
+      }
+      
+      const result = await response.json();
+      const data = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
+      return data;
     }
-    
-    const result = await response.json();
-    const data = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
-    return data;
   } catch (error) {
-    console.error('Error fetching content:', error);
+    console.error(`Error fetching ${section}:`, error);
     throw error;
   }
 };
@@ -50,38 +113,115 @@ export const fetchAllContent = async () => {
 
 export const saveContent = async (section, data) => {
   try {
-    // Create a clean copy of data without image files
-    const cleanData = { ...data };
+    let response;
+    const endpoint = getEndpoint(section);
     
-    const response = await fetch(`${API_URL}/content/${section}`, {
-      method: 'PUT',
-      headers: headers(),
-      body: JSON.stringify({ data: cleanData })
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to save content');
+    // For separate endpoints (projects, services, team)
+    if (usesSeparateEndpoints(section)) {
+      // For these sections, we need to handle the data differently
+      // Extract the items from the data object
+      const items = data[section] || data.data || [];
+      
+      // For services, projects, team - we need to save each item or the collection
+      // This depends on your API design. If your API expects bulk update:
+      response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: headers(),
+        body: JSON.stringify({
+          title: data.title || '',
+          subtitle: data.subtitle || '',
+          data: items // Send the items in a 'data' field
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to save ${section}`);
+      }
+      
+      const result = await response.json();
+      // Return the data in the expected format
+      return {
+        title: result.title || data.title || '',
+        subtitle: result.subtitle || data.subtitle || '',
+        [section]: result.data || items
+      };
+    } else {
+      // For content sections (hero, about, contact)
+      const cleanData = { ...data };
+      
+      response = await fetch(`${API_URL}/content/${section}`, {
+        method: 'PUT',
+        headers: headers(),
+        body: JSON.stringify({ data: cleanData })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save content');
+      }
+      
+      const result = await response.json();
+      const responseData = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
+      return responseData;
     }
-    
-    const result = await response.json();
-    const responseData = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
-    return responseData;
   } catch (error) {
     console.error('Error saving content:', error);
     throw error;
   }
 };
 
-// admin-frontend/src/api/contentApi.js - Updated upload function
+// export const uploadImage = async (section, file, field = 'hero_image') => {
+//   try {
+//     const token = getToken();
+//     const formData = new FormData();
+//     formData.append('image', file);
+//     formData.append('field', field);
+//     formData.append('original_name', file.name);
+    
+//     let endpoint;
+//     if (usesSeparateEndpoints(section)) {
+//       endpoint = `${API_URL}/${section}/upload-image`;
+//     } else {
+//       endpoint = `${API_URL}/content/${section}/upload-image`;
+//     }
+    
+//     const response = await fetch(endpoint, {
+//       method: 'POST',
+//       headers: {
+//         ...(token && { 'Authorization': `Bearer ${token}` })
+//       },
+//       body: formData
+//     });
+    
+//     if (!response.ok) {
+//       throw new Error('Failed to upload image');
+//     }
+    
+//     const result = await response.json();
+//     return result.data;
+//   } catch (error) {
+//     console.error('Error uploading image:', error);
+//     throw error;
+//   }
+// };
+
+// Update the uploadImage function
 export const uploadImage = async (section, file, field = 'hero_image') => {
   try {
     const token = getToken();
     const formData = new FormData();
     formData.append('image', file);
     formData.append('field', field);
-    formData.append('original_name', file.name); // Send original filename
+    formData.append('original_name', file.name);
     
-    const response = await fetch(`${API_URL}/content/${section}/upload-image`, {
+    // Determine the endpoint based on section type
+    let endpoint;
+    if (usesSeparateEndpoints(section)) {
+      endpoint = `${API_URL}/${section}/upload-image`;
+    } else {
+      endpoint = `${API_URL}/content/${section}/upload-image`;
+    }
+    
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         ...(token && { 'Authorization': `Bearer ${token}` })
@@ -90,10 +230,19 @@ export const uploadImage = async (section, file, field = 'hero_image') => {
     });
     
     if (!response.ok) {
-      throw new Error('Failed to upload image');
+      const errorText = await response.text();
+      throw new Error(`Failed to upload image: ${errorText}`);
     }
     
     const result = await response.json();
+    
+    // Ensure the path is clean (remove /api/v1 if present)
+    if (result.data && result.data.path) {
+      // Store just the path as returned (should be relative like /uploads/filename.jpg)
+      // We'll handle the URL construction in ImageUpload component
+      return result.data;
+    }
+    
     return result.data;
   } catch (error) {
     console.error('Error uploading image:', error);
@@ -105,7 +254,14 @@ export const deleteImage = async (section, field = 'hero_image') => {
   try {
     const token = getToken();
     
-    const response = await fetch(`${API_URL}/content/${section}/delete-image`, {
+    let endpoint;
+    if (usesSeparateEndpoints(section)) {
+      endpoint = `${API_URL}/${section}/delete-image`;
+    } else {
+      endpoint = `${API_URL}/content/${section}/delete-image`;
+    }
+    
+    const response = await fetch(endpoint, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -126,6 +282,7 @@ export const deleteImage = async (section, field = 'hero_image') => {
   }
 };
 
+// Auth functions remain the same...
 export const login = async (email, password) => {
   try {
     const response = await fetch(`${API_URL}/auth/login`, {
