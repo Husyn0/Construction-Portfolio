@@ -142,12 +142,18 @@ const Dashboard = ({ onLogout, onNavigateToContentManager }) => {
 
   return (
     <div className="admin-dashboard-wrapper">
+      {/* Sidebar Controller */}
       <button className="sidebar-toggle" onClick={toggleSidebar}>
-        {isMobileOpen ? <GoX size={24} /> : <FaBars size={24} />}
+        {
+        isMobileOpen ?
+         <GoX size={24} /> 
+         : 
+         <FaBars size={24} />
+         }
       </button>
 
       {isMobileOpen && <div className="sidebar-overlay" onClick={closeSidebar}></div>}
-
+    {/* Sidebar */}
       <div className={`dashboard-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-header">
           <div className="sidebar-logo">
@@ -180,6 +186,7 @@ const Dashboard = ({ onLogout, onNavigateToContentManager }) => {
       </div>
 
       <div className="dashboard-main">
+        {/* Topbar */}
         <div className="dashboard-topbar">
           <h2>
             <i className="fas fa-chart-pie"></i>

@@ -82,13 +82,7 @@ $router->put("$api/team/{id}", [$controllers . 'TeamController', 'update']);
 $router->delete("$api/team/{id}", [$controllers . 'TeamController', 'delete']);
 $router->put("$api/team/reorder", [$controllers . 'TeamController', 'reorder']);
 
-// Analytics Routes
-$router->post("$api/analytics/track", [$controllers . 'AnalyticsController', 'track']);
-$router->get("$api/analytics/admin/overview", [$controllers . 'AnalyticsController', 'getOverview']);
-$router->get("$api/analytics/admin/traffic-sources", [$controllers . 'AnalyticsController', 'getTrafficSources']);
-$router->get("$api/analytics/admin/geolocation", [$controllers . 'AnalyticsController', 'getGeolocation']);
-$router->get("$api/analytics/admin/device-breakdown", [$controllers . 'AnalyticsController', 'getDeviceBreakdown']);
-$router->get("$api/analytics/admin/unique-vs-returning", [$controllers . 'AnalyticsController', 'getUniqueVsReturning']);
+
 
 // Dispatch
 $router->dispatch();
