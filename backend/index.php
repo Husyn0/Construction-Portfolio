@@ -113,7 +113,6 @@ $router->get("$api/projects/{id}", [$controllers . 'ProjectController', 'show'])
 $router->post("$api/projects", [$controllers . 'ProjectController', 'store']);
 $router->put("$api/projects/{id}", [$controllers . 'ProjectController', 'update']);
 $router->delete("$api/projects/{id}", [$controllers . 'ProjectController', 'delete']);
-$router->put("$api/projects/reorder", [$controllers . 'ProjectController', 'reorder']);
 
 // Service Routes (separate table)
 $router->get("$api/services", [$controllers . 'ServiceController', 'index']);
@@ -121,7 +120,8 @@ $router->get("$api/services/{id}", [$controllers . 'ServiceController', 'show'])
 $router->post("$api/services", [$controllers . 'ServiceController', 'store']);
 $router->put("$api/services/{id}", [$controllers . 'ServiceController', 'update']);
 $router->delete("$api/services/{id}", [$controllers . 'ServiceController', 'delete']);
-$router->put("$api/services/reorder", [$controllers . 'ServiceController', 'reorder']);
+$router->post("$api/services/{id}/upload-image", [$controllers . 'ServiceController', 'uploadImage']);
+$router->delete("$api/services/{id}/delete-image", [$controllers . 'ServiceController', 'deleteImage']);
 
 // Team Routes (separate table)
 $router->get("$api/team", [$controllers . 'TeamController', 'index']);
@@ -129,7 +129,6 @@ $router->get("$api/team/{id}", [$controllers . 'TeamController', 'show']);
 $router->post("$api/team", [$controllers . 'TeamController', 'store']);
 $router->put("$api/team/{id}", [$controllers . 'TeamController', 'update']);
 $router->delete("$api/team/{id}", [$controllers . 'TeamController', 'delete']);
-$router->put("$api/team/reorder", [$controllers . 'TeamController', 'reorder']);
 
 
 

@@ -7,6 +7,11 @@ use App\Helpers\Database;
 use App\Models\Content;
 use Exception;
 use PDO;
+// Add at the top of the file
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
+ini_set('error_log', '/tmp/php_errors.log');
 
 class ContentController {
     
@@ -35,30 +40,99 @@ class ContentController {
             $data = $decoded ?: [];
         }
         
-        // Add image fields to response based on section
+        // Add image fields to response
         $response = $data;
         if (is_array($response)) {
-            // Hero section
-            if ($section === 'hero') {
-                $response['hero_image'] = $content['hero_image'] ?? null;
-                $response['hero_image_alt'] = $content['hero_image_alt'] ?? null;
-            }
-            // About section
-            if ($section === 'about') {
-                $response['about_image_1'] = $content['about_image_1'] ?? null;
-                $response['about_image_1_alt'] = $content['about_image_1_alt'] ?? null;
-                $response['about_image_2'] = $content['about_image_2'] ?? null;
-                $response['about_image_2_alt'] = $content['about_image_2_alt'] ?? null;
-            }
-            // Services section
-            if ($section === 'services') {
-                $response['background_image'] = $content['background_image'] ?? null;
-                $response['background_image_alt'] = $content['background_image_alt'] ?? null;
-            }
-            // Contact section - no images typically
+            $response['image_1'] = $content['image_1'] ?? null;
+            $response['image_1_alt'] = $content['image_1_alt'] ?? null;
+            $response['image_2'] = $content['image_2'] ?? null;
+            $response['image_2_alt'] = $content['image_2_alt'] ?? null;
         }
 
         return Response::success($response);
+    }
+
+    /**
+     * Get all content sections
+     */
+    public function getAll() {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->query("
+            SELECT *
+            FROM content 
+            ORDER BY section, created_at DESC
+        ");
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (empty($results)) {
+            return Response::success([]);  
+        }
+        
+        // Group by section and get latest for each
+        $sections = [];
+        foreach ($results as $row) {
+            $section = $row['section'];
+            if (!isset($sections[$section])) {
+                // Decode data
+                $data = $row['data'];
+                if (is_string($data)) {
+                    $decoded = json_decode($data, true);
+                    if ($decoded === null && is_string($data)) {
+                        $cleanData = trim($data);
+                        if (strpos($cleanData, '"') === 0) {
+                            $cleanData = stripslashes($cleanData);
+                            $cleanData = trim($cleanData, '"');
+                            $cleanData = stripslashes($cleanData);
+                            $decoded = json_decode($cleanData, true);
+                        }
+                    }
+                    $data = $decoded ?: [];
+                }
+                
+                $sections[$section] = [
+                    'section' => $section,
+                    'data' => $data,
+                    'image_1' => $row['image_1'],
+                    'image_1_alt' => $row['image_1_alt'],
+                    'image_2' => $row['image_2'],
+                    'image_2_alt' => $row['image_2_alt'],
+                    'is_published' => $row['is_published'],
+                    'created_at' => $row['created_at'],
+                    'updated_at' => $row['updated_at']
+                ];
+            }
+        }
+        
+        return Response::success(array_values($sections));
+    }
+
+    /**
+     * Get content history for a section
+     */
+    public function history($section) {
+        $history = Content::getHistory($section);
+        if (empty($history)) {
+            return Response::notFound('No history found for this section');
+        }
+        
+        // Process each history entry
+        foreach ($history as &$entry) {
+            if (isset($entry['data']) && is_string($entry['data'])) {
+                $decoded = json_decode($entry['data'], true);
+                if ($decoded === null) {
+                    $cleanData = trim($entry['data']);
+                    if (strpos($cleanData, '"') === 0) {
+                        $cleanData = stripslashes($cleanData);
+                        $cleanData = trim($cleanData, '"');
+                        $cleanData = stripslashes($cleanData);
+                        $decoded = json_decode($cleanData, true);
+                    }
+                }
+                $entry['data'] = $decoded ?: [];
+            }
+        }
+        
+        return Response::success($history);
     }
 
     /**
@@ -75,63 +149,28 @@ class ContentController {
         $isPublished = $input['is_published'] ?? true;
         $data = $input['data'];
         
-        // Handle image fields based on section
-        $heroImage = null;
-        $heroImageAlt = null;
-        $aboutImage1 = null;
-        $aboutImage1Alt = null;
-        $aboutImage2 = null;
-        $aboutImage2Alt = null;
-        $backgroundImage = null;
-        $backgroundImageAlt = null;
+        // Extract image fields from INPUT root level
+        $image1 = $input['image_1'] ?? null;
+        $image1Alt = $input['image_1_alt'] ?? null;
+        $image2 = $input['image_2'] ?? null;
+        $image2Alt = $input['image_2_alt'] ?? null;
         
-        // Hero section images
-        if ($section === 'hero') {
-            $heroImage = $data['hero_image'] ?? null;
-            $heroImageAlt = $data['hero_image_alt'] ?? null;
-            unset($data['hero_image']);
-            unset($data['hero_image_alt']);
-        }
+        // Remove from data if they exist there
+        unset($data['image_1']);
+        unset($data['image_1_alt']);
+        unset($data['image_2']);
+        unset($data['image_2_alt']);
         
-        // About section images
-        if ($section === 'about') {
-            $aboutImage1 = $data['about_image_1'] ?? null;
-            $aboutImage1Alt = $data['about_image_1_alt'] ?? null;
-            $aboutImage2 = $data['about_image_2'] ?? null;
-            $aboutImage2Alt = $data['about_image_2_alt'] ?? null;
-            unset($data['about_image_1']);
-            unset($data['about_image_1_alt']);
-            unset($data['about_image_2']);
-            unset($data['about_image_2_alt']);
-        }
-        
-        // Services section background
-        if ($section === 'services') {
-            $backgroundImage = $data['background_image'] ?? null;
-            $backgroundImageAlt = $data['background_image_alt'] ?? null;
-            unset($data['background_image']);
-            unset($data['background_image_alt']);
-        }
-        
-        // Get latest version
-        $latestVersion = Content::getLatestVersion($section);
-        $newVersion = $latestVersion + 1;
-        
-        // Create new version with appropriate image fields
+        // Create new version
         $result = Content::create([
             'section' => $section,
             'data' => json_encode($data),
-            'version' => $newVersion,
             'last_modified_by' => $user ? $user['id'] : null,
             'is_published' => $isPublished,
-            'hero_image' => $heroImage,
-            'hero_image_alt' => $heroImageAlt,
-            'about_image_1' => $aboutImage1,
-            'about_image_1_alt' => $aboutImage1Alt,
-            'about_image_2' => $aboutImage2,
-            'about_image_2_alt' => $aboutImage2Alt,
-            'background_image' => $backgroundImage,
-            'background_image_alt' => $backgroundImageAlt
+            'image_1' => $image1,
+            'image_1_alt' => $image1Alt,
+            'image_2' => $image2,
+            'image_2_alt' => $image2Alt
         ]);
         
         if (!$result) {
@@ -140,110 +179,124 @@ class ContentController {
         
         return Response::success([
             'section' => $section,
-            'version' => $newVersion,
-            'data' => $data
+            'data' => $data,
+            'image_1' => $image1,
+            'image_1_alt' => $image1Alt,
+            'image_2' => $image2,
+            'image_2_alt' => $image2Alt
         ], 'Content updated successfully');
     }
 
     /**
-     * Upload image for any section
+     * Upload image for content section
      */
-    public function uploadImage($section) {
-        try {
-            $user = $GLOBALS['user'] ?? null;
-            if (!$user) {
-                return Response::error('Unauthorized', 401);
-            }
-            
-            if (!isset($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
-                return Response::error('No image file provided or upload error', 400);
-            }
-            
-            $file = $_FILES['image'];
-            $field = $_POST['field'] ?? 'hero_image';
-            $originalName = $_POST['original_name'] ?? $file['name'];
-            
-            // Validate image type
-            $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mimeType = finfo_file($finfo, $file['tmp_name']);
-            finfo_close($finfo);
-            
-            if (!in_array($mimeType, $allowedTypes)) {
-                return Response::error('Invalid image type. Allowed: JPEG, PNG, WEBP, GIF', 400);
-            }
-            
-            // Validate file size (5MB max)
-            $maxSize = 5 * 1024 * 1024;
-            if ($file['size'] > $maxSize) {
-                return Response::error('Image too large. Max size: 5MB', 400);
-            }
-            
-            // Generate unique filename with original name preserved
-            $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-            $baseName = pathinfo($originalName, PATHINFO_FILENAME);
-            $cleanBaseName = preg_replace('/[^a-zA-Z0-9_-]/', '', $baseName);
-            $filename = $cleanBaseName . '_' . time() . '_' . uniqid() . '.' . $extension;
-            
-            // Create upload directory if it doesn't exist
-            $uploadDir = __DIR__ . '/../../uploads/';
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
-            }
-            
-            // Move uploaded file
-            $targetPath = $uploadDir . $filename;
-            if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
-                return Response::error('Failed to upload image', 500);
-            }
-            
-            $imagePath = '/uploads/' . $filename;
-            
-            // Store both the generated path and original name mapping
-            $db = Database::getInstance();
-            
-            // Get current content for this section
-            $stmt = $db->prepare("SELECT id, image_mapping FROM content WHERE section = ? ORDER BY version DESC LIMIT 1");
-            $stmt->execute([$section]);
-            $currentContent = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            $imageMapping = [];
-            if ($currentContent && $currentContent['image_mapping']) {
-                $imageMapping = json_decode($currentContent['image_mapping'], true) ?: [];
-            }
-            
-            // Store mapping of original name to generated path
-            $imageMapping[$field] = [
-                'original' => $originalName,
-                'path' => $imagePath,
-                'uploaded_at' => date('Y-m-d H:i:s')
-            ];
-            
-            if ($currentContent) {
-                // Update existing content with image and mapping
-                $stmt = $db->prepare("UPDATE content SET {$field} = ?, image_mapping = ? WHERE id = ?");
-                $stmt->execute([$imagePath, json_encode($imageMapping), $currentContent['id']]);
-            } else {
-                // Create new content with image and mapping
-                $stmt = $db->prepare("INSERT INTO content (section, data, version, {$field}, image_mapping, is_published) VALUES (?, '{}', 1, ?, ?, 1)");
-                $stmt->execute([$section, $imagePath, json_encode($imageMapping)]);
-            }
-            
-            return Response::success([
-                'success' => true,
-                'path' => $imagePath,
-                'url' => $this->getImageUrl($imagePath),
-                'original_name' => $originalName,
-                'field' => $field
-            ], 'Image uploaded successfully');
-            
-        } catch (Exception $e) {
-            return Response::error('Upload failed: ' . $e->getMessage(), 500);
+public function uploadImage($section) {
+    try {
+        // Log everything
+        error_log("=== UPLOAD IMAGE CALLED ===");
+        error_log("Section: " . $section);
+        error_log("FILES: " . print_r($_FILES, true));
+        error_log("POST: " . print_r($_POST, true));
+        
+        $user = $GLOBALS['user'] ?? null;
+        if (!$user) {
+            error_log("User not authenticated");
+            return Response::error('Unauthorized', 401);
         }
+        
+        if (!isset($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
+            error_log("File upload error: " . ($_FILES['image']['error'] ?? 'No file'));
+            return Response::error('No image file provided or upload error', 400);
+        }
+        
+        $file = $_FILES['image'];
+        $imageField = $_POST['field'] ?? 'image_1';
+        $originalName = $_POST['original_name'] ?? $file['name'];
+        
+        error_log("Image Field: " . $imageField);
+        error_log("Original Name: " . $originalName);
+        error_log("Temp File: " . $file['tmp_name']);
+        
+        // Validate image type
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+        
+        error_log("MIME Type: " . $mimeType);
+        
+        if (!in_array($mimeType, $allowedTypes)) {
+            return Response::error('Invalid image type. Allowed: JPEG, PNG, WEBP, GIF', 400);
+        }
+        
+        // Validate file size (5MB max)
+        $maxSize = 5 * 1024 * 1024;
+        if ($file['size'] > $maxSize) {
+            return Response::error('Image too large. Max size: 5MB', 400);
+        }
+        
+        // Generate unique filename
+        $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+        $baseName = pathinfo($originalName, PATHINFO_FILENAME);
+        $cleanBaseName = preg_replace('/[^a-zA-Z0-9_-]/', '', $baseName);
+        $filename = $cleanBaseName . '_' . time() . '_' . uniqid() . '.' . $extension;
+        
+        // Create upload directory if it doesn't exist
+        $uploadDir = __DIR__ . '/../../uploads/content/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+            error_log("Created upload directory: " . $uploadDir);
+        }
+        
+        // Move uploaded file
+        $targetPath = $uploadDir . $filename;
+        error_log("Target Path: " . $targetPath);
+        
+        if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+            error_log("Failed to move uploaded file");
+            return Response::error('Failed to upload image', 500);
+        }
+        
+        $imagePath = '/uploads/content/' . $filename;
+        error_log("Image Path: " . $imagePath);
+        
+        // Update database
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT * FROM content WHERE section = ? ORDER BY created_at DESC LIMIT 1");
+        $stmt->execute([$section]);
+        $currentContent = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        error_log("Current Content: " . print_r($currentContent, true));
+        
+        if ($currentContent) {
+            error_log("Updating existing record ID: " . $currentContent['id']);
+            $stmt = $db->prepare("UPDATE content SET {$imageField} = ? WHERE id = ?");
+            $result = $stmt->execute([$imagePath, $currentContent['id']]);
+            error_log("Update result: " . ($result ? 'SUCCESS' : 'FAILED'));
+        } else {
+            error_log("Creating new record");
+            $stmt = $db->prepare("INSERT INTO content (section, data, {$imageField}, is_published) VALUES (?, '{}', ?, 1)");
+            $result = $stmt->execute([$section, $imagePath]);
+            error_log("Insert result: " . ($result ? 'SUCCESS' : 'FAILED'));
+        }
+        
+        return Response::success([
+            'success' => true,
+            'path' => $imagePath,
+            'url' => $this->getImageUrl($imagePath),
+            'original_name' => $originalName,
+            'field' => $imageField
+        ], 'Image uploaded successfully');
+        
+    } catch (Exception $e) {
+        error_log("EXCEPTION: " . $e->getMessage());
+        error_log("Stack trace: " . $e->getTraceAsString());
+        return Response::error('Upload failed: ' . $e->getMessage(), 500);
     }
+}
 
     /**
-     * Delete image for any section
+     * Delete image for content section
      */
     public function deleteImage($section) {
         try {
@@ -252,20 +305,20 @@ class ContentController {
                 return Response::error('Unauthorized', 401);
             }
             
-            $field = $_POST['field'] ?? 'hero_image';
+            $imageField = $_POST['field'] ?? 'image_1';
             
-            $db = Database::getInstance();
-            
+            $db = Database::getInstance()->getConnection();
+
             // Get current image path
-            $stmt = $db->prepare("SELECT {$field} FROM content WHERE section = ? ORDER BY id DESC LIMIT 1");
+            $stmt = $db->prepare("SELECT {$imageField} FROM content WHERE section = ? ORDER BY created_at DESC LIMIT 1");
             $stmt->execute([$section]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            if (!$result || empty($result[$field])) {
+            if (!$result || empty($result[$imageField])) {
                 return Response::error('No image to delete', 404);
             }
             
-            $imagePath = $result[$field];
+            $imagePath = $result[$imageField];
             
             // Delete physical file
             $fullPath = __DIR__ . '/../..' . $imagePath;
@@ -274,7 +327,7 @@ class ContentController {
             }
             
             // Remove from database
-            $stmt = $db->prepare("UPDATE content SET {$field} = NULL WHERE section = ? ORDER BY id DESC LIMIT 1");
+            $stmt = $db->prepare("UPDATE content SET {$imageField} = NULL WHERE section = ? ORDER BY created_at DESC LIMIT 1");
             $stmt->execute([$section]);
             
             return Response::success(null, 'Image deleted successfully');

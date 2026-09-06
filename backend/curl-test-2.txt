@@ -1,6 +1,6 @@
 # ============================================================================
 # BUILDPORT API - INDIVIDUAL TEST COMMANDS
-# Fixed version - Copy and paste each command one by one
+# Updated for new schema (no display_order, simplified content images)
 # ============================================================================
 
 # ============================================================================
@@ -41,11 +41,11 @@ echo ""
 echo ""
 
 # ============================================================================
-# 2. CONTENT TESTS
+# 2. CONTENT TESTS (Updated - No version column)
 # ============================================================================
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "▶ 2. CONTENT TESTS"
+echo "▶ 2. CONTENT TESTS (Simplified - No versions)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 echo "▶ 2.1 Get Hero Content (Public)"
@@ -59,34 +59,66 @@ curl -s -X GET \
   http://localhost:8000/api/v1/content/all
 
 echo ""
-echo "▶ 2.3 Update Hero Content (Protected)"
+echo "▶ 2.3 Update Hero Content with Images (Protected)"
 curl -s -X PUT \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"data":{"badge":"🏗️ Premier Construction 2024","title":"Building <span>Tomorrow</span> Today","description":"We transform visions into reality","stats":[{"number":"450","label":"Projects"},{"number":"98","label":"Satisfaction"},{"number":"25","label":"Awards"}]}}' \
+  -d '{
+    "data": {
+      "badge": "🏗️ Premier Construction 2024",
+      "title": "Building <span>Tomorrow</span> Today",
+      "description": "We transform visions into reality",
+      "stats": [
+        {"number": "450", "label": "Projects"},
+        {"number": "98", "label": "Satisfaction"},
+        {"number": "25", "label": "Awards"}
+      ]
+    },
+    "image_1": "/uploads/content/hero_image.jpg",
+    "image_1_alt": "Hero banner image",
+    "image_2": "/uploads/content/hero_image_2.jpg",
+    "image_2_alt": "Hero secondary image"
+  }' \
   http://localhost:8000/api/v1/content/hero
 
 echo ""
-echo "▶ 2.4 Get Content History (Protected)"
+echo "▶ 2.4 Get About Content (Public)"
+curl -s -X GET \
+  http://localhost:8000/api/v1/content/about
+
+echo ""
+echo "▶ 2.5 Update About Content with Images (Protected)"
+curl -s -X PUT \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "data": {
+      "title": "About Our Company",
+      "description": "We are a premier construction company",
+      "mission": "To build excellence"
+    },
+    "image_1": "/uploads/content/about_image1.jpg",
+    "image_1_alt": "About us image 1",
+    "image_2": "/uploads/content/about_image2.jpg",
+    "image_2_alt": "About us image 2"
+  }' \
+  http://localhost:8000/api/v1/content/about
+
+echo ""
+echo "▶ 2.6 Get Content History (Protected) - Shows all versions by created_at"
 curl -s -X GET \
   -H "Authorization: Bearer $TOKEN" \
   http://localhost:8000/api/v1/content/hero/history
 
 echo ""
-echo "▶ 2.5 Revert to Version 1 (Protected)"
-curl -s -X POST \
-  -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8000/api/v1/content/hero/revert/1
-
-echo ""
 echo ""
 
 # ============================================================================
-# 3. PROJECT TESTS (CRUD)
+# 3. PROJECT TESTS (CRUD - No reorder)
 # ============================================================================
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "▶ 3. PROJECT TESTS"
+echo "▶ 3. PROJECT TESTS (No reorder)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 echo "▶ 3.1 Get All Projects (Protected)"
@@ -95,50 +127,70 @@ curl -s -X GET \
   http://localhost:8000/api/v1/projects
 
 echo ""
-echo "▶ 3.2 Create Project (Protected)"
+echo "▶ 3.2 Get Projects with Pagination (Protected)"
+curl -s -X GET \
+  -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8000/api/v1/projects?limit=5&page=1"
+
+echo ""
+echo "▶ 3.3 Get Projects with Category Filter (Protected)"
+curl -s -X GET \
+  -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8000/api/v1/projects?category=Commercial"
+
+echo ""
+echo "▶ 3.4 Get Featured Projects (Protected)"
+curl -s -X GET \
+  -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8000/api/v1/projects?featured=true"
+
+echo ""
+echo "▶ 3.5 Create Project (Protected)"
 curl -s -X POST \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"title":"Modern Office Tower","description":"A 50-story commercial office tower","category":"Commercial","location":"New York City"}' \
+  -d '{
+    "title": "Modern Office Tower",
+    "description": "A 50-story commercial office tower",
+    "category": "Commercial",
+    "location": "New York City",
+    "tags": ["modern", "sustainable", "high-rise"],
+    "is_featured": 1
+  }' \
   http://localhost:8000/api/v1/projects
 
 echo ""
-echo "▶ 3.3 Get Single Project (Replace 1 with actual ID from create response)"
+echo "▶ 3.6 Get Single Project (Replace 2 with actual ID from create response)"
 curl -s -X GET \
   -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8000/api/v1/projects/2
+  http://localhost:8000/api/v1/projects/3
 
 echo ""
-echo "▶ 3.4 Update Project (Replace 2 with actual ID)"
+echo "▶ 3.7 Update Project (Replace 2 with actual ID)"
 curl -s -X PUT \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"title":"Updated Office Tower"}' \
-  http://localhost:8000/api/v1/projects/2
+  -d '{
+    "title": "Updated Office Tower",
+    "description": "Updated description"
+  }' \
+  http://localhost:8000/api/v1/projects/3
 
 echo ""
-echo "▶ 3.5 Delete Project (Replace 1 with actual ID)"
+echo "▶ 3.8 Delete Project (Replace 2 with actual ID)"
 curl -s -X DELETE \
   -H "Authorization: Bearer $TOKEN" \
   http://localhost:8000/api/v1/projects/2
 
 echo ""
-echo "▶ 3.6 Reorder Projects"
-curl -s -X PUT \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{"orders":[{"id":1,"order":0},{"id":2,"order":1},{"id":3,"order":2}]}' \
-  http://localhost:8000/api/v1/projects/reorder
-
-echo ""
 echo ""
 
 # ============================================================================
-# 4. SERVICE TESTS (CRUD)
+# 4. SERVICE TESTS (CRUD - With image upload)
 # ============================================================================
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "▶ 4. SERVICE TESTS"
+echo "▶ 4. SERVICE TESTS (With image support)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 echo "▶ 4.1 Get All Services (Protected)"
@@ -147,50 +199,64 @@ curl -s -X GET \
   http://localhost:8000/api/v1/services
 
 echo ""
-echo "▶ 4.2 Create Service (Protected)"
+echo "▶ 4.2 Create Service with Image (Protected)"
 curl -s -X POST \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"title":"Architectural Design","description":"Full architectural design services","icon":"fa-building"}' \
+  -d '{
+    "title": "Architectural Design",
+    "description": "Full architectural design services",
+    "icon": "fa-building",
+    "image": "/uploads/services.jpg"
+  }' \
   http://localhost:8000/api/v1/services
 
 echo ""
-echo "▶ 4.3 Get Single Service (Replace 2 with actual ID from create response)"
+echo "▶ 4.3 Get Single Service (Replace 2 with actual ID)"
 curl -s -X GET \
   -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8000/api/v1/services/2
+  http://localhost:8000/api/v1/services/4
 
 echo ""
-echo "▶ 4.4 Update Service (Replace 1 with actual ID)"
+echo "▶ 4.4 Upload Service Image (Replace 2 with actual ID)"
+curl -s -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "image=@/home/hkali/Desktop/VioletPro/backend/uploads/services.jpg" \
+  http://localhost:8000/api/v1/services/4/upload-image
+
+echo ""
+echo "▶ 4.5 Update Service (Replace 2 with actual ID)"
 curl -s -X PUT \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"title":"Updated Architectural Design"}' \
-  http://localhost:8000/api/v1/services/2
+  -d '{
+    "title": "Updated Architectural Design",
+    "description": "Updated description",
+    "icon": "fa-building-o"
+  }' \
+  http://localhost:8000/api/v1/services/5
 
 echo ""
-echo "▶ 4.5 Delete Service (Replace 2 with actual ID)"
+echo "▶ 4.6 Delete Service Image (Replace 2 with actual ID)"
 curl -s -X DELETE \
   -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8000/api/v1/services/2
+  http://localhost:8000/api/v1/services/3/delete-image
 
 echo ""
-echo "▶ 4.6 Reorder Services"
-curl -s -X PUT \
-  -H "Content-Type: application/json" \
+echo "▶ 4.7 Delete Service (Replace 2 with actual ID)"
+curl -s -X DELETE \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"orders":[{"id":2,"order":0},{"id":3,"order":1},{"id":4,"order":3}]}' \
-  http://localhost:8000/api/v1/services/reorder
+  http://localhost:8000/api/v1/services/5
 
 echo ""
 echo ""
 
 # ============================================================================
-# 5. TEAM TESTS (CRUD)
+# 5. TEAM TESTS (CRUD - No reorder)
 # ============================================================================
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "▶ 5. TEAM TESTS"
+echo "▶ 5. TEAM TESTS (No reorder)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 echo "▶ 5.1 Get All Team Members (Protected)"
@@ -203,11 +269,20 @@ echo "▶ 5.2 Create Team Member (Protected)"
 curl -s -X POST \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"name":"John Architect","role":"Lead Architect","bio":"20 years experience in commercial architecture","experience":"20 years"}' \
+  -d '{
+    "name": "John Architect",
+    "role": "Lead Architect",
+    "bio": "20 years experience in commercial architecture",
+    "experience": "20 years",
+    "social": {
+      "linkedin": "https://linkedin.com/in/johnarchitect",
+      "twitter": "https://twitter.com/johnarchitect"
+    }
+  }' \
   http://localhost:8000/api/v1/team
 
 echo ""
-echo "▶ 5.3 Get Single Team Member (Replace 1 with actual ID from create response)"
+echo "▶ 5.3 Get Single Team Member (Replace 2 with actual ID)"
 curl -s -X GET \
   -H "Authorization: Bearer $TOKEN" \
   http://localhost:8000/api/v1/team/2
@@ -217,44 +292,77 @@ echo "▶ 5.4 Update Team Member (Replace 2 with actual ID)"
 curl -s -X PUT \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"name":"John Architect Sr.","role":"Senior Lead Architect"}' \
+  -d '{
+    "name": "John Architect Sr.",
+    "role": "Senior Lead Architect",
+    "experience": "25 years"
+  }' \
   http://localhost:8000/api/v1/team/2
 
 echo ""
-echo "▶ 5.5 Delete Team Member (Replace 1 with actual ID)"
+echo "▶ 5.5 Delete Team Member (Replace 2 with actual ID)"
 curl -s -X DELETE \
   -H "Authorization: Bearer $TOKEN" \
   http://localhost:8000/api/v1/team/2
 
 echo ""
-echo "▶ 5.6 Reorder Team Members"
-curl -s -X PUT \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{"orders":[{"id":2,"order":0},{"id":3,"order":1},{"id":4,"order":2}]}' \
-  http://localhost:8000/api/v1/team/reorder
-
-echo ""
 echo ""
 
 # ============================================================================
-# 6. IMAGE UPLOAD TESTS
+# 6. IMAGE UPLOAD TESTS (Updated for new schema)
 # ============================================================================
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "▶ 6. IMAGE UPLOAD TESTS"
+echo "▶ 6. CONTENT IMAGE UPLOAD TESTS (image_1, image_2)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-echo "▶ 6.1 Upload Hero Image (Replace path with actual image)"
+echo "▶ 6.1 Upload Hero Image 1 (Protected)"
 curl -s -X POST \
   -H "Authorization: Bearer $TOKEN" \
-  -F "hero_image=@/home/hkali/Desktop/VioletPro/backend/uploads/Home.jpg" \
+  -F "image=@/home/hkali/Desktop/VioletPro/backend/uploads/hero.jpg" \
+  -F "field=image_1" \
+  -F "original_name=hero_main.jpg" \
   http://localhost:8000/api/v1/content/hero/upload-image
 
 echo ""
-echo "▶ 6.2 Delete Hero Image"
+echo "▶ 6.2 Upload Hero Image 2 (Protected)"
+curl -s -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "image=@/home/hkali/Desktop/VioletPro/backend/uploads/hero_alt.jpg" \
+  -F "field=image_2" \
+  -F "original_name=hero_alternate.jpg" \
+  http://localhost:8000/api/v1/content/hero/upload-image
+
+echo ""
+echo "▶ 6.3 Upload About Image 1 (Protected)"
+curl -s -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "image=@/home/hkali/Desktop/VioletPro/backend/uploads/about1.jpg" \
+  -F "field=image_1" \
+  -F "original_name=about_main.jpg" \
+  http://localhost:8000/api/v1/content/about/upload-image
+
+echo ""
+echo "▶ 6.4 Upload About Image 2 (Protected)"
+curl -s -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "image=@/home/hkali/Desktop/VioletPro/backend/uploads/about2.jpg" \
+  -F "field=image_2" \
+  -F "original_name=about_secondary.jpg" \
+  http://localhost:8000/api/v1/content/about/upload-image
+
+echo ""
+echo "▶ 6.5 Delete Hero Image 1 (Protected)"
 curl -s -X DELETE \
   -H "Authorization: Bearer $TOKEN" \
+  -F "field=image_1" \
+  http://localhost:8000/api/v1/content/hero/delete-image
+
+echo ""
+echo "▶ 6.6 Delete Hero Image 2 (Protected)"
+curl -s -X DELETE \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "field=image_2" \
   http://localhost:8000/api/v1/content/hero/delete-image
 
 echo ""
@@ -279,13 +387,13 @@ for i in 1 2 3; do
   echo ""
 done
 
-echo "▶ 7.2 Create 3 Services in a loop"
+echo "▶ 7.2 Create 3 Services with Images in a loop"
 for i in 1 2 3; do
   echo "Creating Service $i..."
   curl -s -X POST \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer $TOKEN" \
-    -d "{\"title\":\"Test Service $i\",\"description\":\"Test service $i description\",\"icon\":\"fa-test-$i\"}" \
+    -d "{\"title\":\"Test Service $i\",\"description\":\"Test service $i description\",\"icon\":\"fa-test-$i\",\"image\":\"/uploads/services/test_$i.jpg\"}" \
     http://localhost:8000/api/v1/services
   echo ""
 done
@@ -341,6 +449,19 @@ echo "▶ 8.5 Get Non-existent Project (Should return 404)"
 curl -s -X GET \
   -H "Authorization: Bearer $TOKEN" \
   http://localhost:8000/api/v1/projects/99999
+
+echo ""
+echo "▶ 8.6 Upload image to non-existent service (Should return 404)"
+curl -s -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "image=@/home/hkali/Desktop/VioletPro/backend/uploads/test.jpg" \
+  http://localhost:8000/api/v1/services/99999/upload-image
+
+echo ""
+echo "▶ 8.7 Delete image from non-existent service (Should return 404)"
+curl -s -X DELETE \
+  -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8000/api/v1/services/99999/delete-image
 
 echo ""
 echo ""

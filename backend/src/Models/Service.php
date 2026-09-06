@@ -11,7 +11,7 @@ class Service {
         $stmt = $db->query("
             SELECT * FROM services 
             WHERE is_active = 1 
-            ORDER BY display_order ASC, created_at DESC
+            ORDER BY created_at DESC
         ");
         $services = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $services;
@@ -27,6 +27,12 @@ class Service {
 
     public static function create($data) {
         $db = Database::getInstance()->getConnection();
+        
+        // Handle image field if present
+        if (isset($data['image']) && !empty($data['image'])) {
+            // Image path is already set
+        }
+        
         $fields = array_keys($data);
         $placeholders = array_map(function($field) {
             return ":$field";
@@ -62,25 +68,5 @@ class Service {
         $db = Database::getInstance()->getConnection();
         $stmt = $db->prepare("DELETE FROM services WHERE id = :id");
         return $stmt->execute([':id' => $id]);
-    }
-
-    public static function reorder($orders) {
-        $db = Database::getInstance()->getConnection();
-        $db->beginTransaction();
-        
-        try {
-            foreach ($orders as $order) {
-                $stmt = $db->prepare("UPDATE services SET display_order = :order WHERE id = :id");
-                $stmt->execute([
-                    ':order' => $order['order'],
-                    ':id' => $order['id']
-                ]);
-            }
-            $db->commit();
-            return true;
-        } catch (\Exception $e) {
-            $db->rollBack();
-            throw $e;
-        }
     }
 }

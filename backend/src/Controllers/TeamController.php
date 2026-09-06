@@ -63,31 +63,4 @@ class TeamController {
         }
         return Response::error('Failed to delete team member', 500);
     }
-
-
-public function reorder() {
-    $input = json_decode(file_get_contents('php://input'), true);
-    
-    if (!isset($input['orders']) || !is_array($input['orders'])) {
-        return Response::error('Orders array is required', 400);
-    }
-    
-    // Validate each order has id and order
-    foreach ($input['orders'] as $order) {
-        if (!isset($order['id']) || !isset($order['order'])) {
-            return Response::error('Each order must have id and order fields', 400);
-        }
-    }
-    
-    // Call the model's reorder method directly
-    try {
-        $result = Team::reorder($input['orders']);
-        if ($result) {
-            return Response::success(null, 'Team members reordered successfully');
-        }
-        return Response::error('Failed to reorder team members', 500);
-    } catch (\Exception $e) {
-        return Response::error('Failed to reorder team members: ' . $e->getMessage(), 500);
-    }
-}
 }

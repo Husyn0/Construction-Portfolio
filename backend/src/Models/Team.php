@@ -11,7 +11,7 @@ class Team {
         $stmt = $db->query("
             SELECT * FROM team 
             WHERE is_active = 1 
-            ORDER BY display_order ASC, created_at DESC
+            ORDER BY created_at DESC
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -86,25 +86,5 @@ class Team {
         $db = Database::getInstance()->getConnection();
         $stmt = $db->prepare("DELETE FROM team WHERE id = :id");
         return $stmt->execute([':id' => $id]);
-    }
-
-    public static function reorder($orders) {
-        $db = Database::getInstance()->getConnection();
-        $db->beginTransaction();
-        
-        try {
-            foreach ($orders as $order) {
-                $stmt = $db->prepare("UPDATE team SET display_order = :order WHERE id = :id");
-                $stmt->execute([
-                    ':order' => $order['order'],
-                    ':id' => $order['id']
-                ]);
-            }
-            $db->commit();
-            return true;
-        } catch (\Exception $e) {
-            $db->rollBack();
-            throw $e;
-        }
     }
 }

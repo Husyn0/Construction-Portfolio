@@ -11,7 +11,7 @@ class Content {
         $stmt = $db->prepare("
             SELECT * FROM content 
             WHERE section = :section AND is_published = 1 
-            ORDER BY version DESC LIMIT 1
+            ORDER BY created_at DESC LIMIT 1
         ");
         $stmt->execute([':section' => $section]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -37,31 +37,21 @@ class Content {
         $db = Database::getInstance()->getConnection();
         
         $stmt = $db->prepare("
-            INSERT INTO content (section, data, version, last_modified_by, is_published, 
-                hero_image, hero_image_alt, about_image_1, about_image_1_alt, 
-                about_image_2, about_image_2_alt, background_image, background_image_alt,
-                image_mapping) 
-            VALUES (:section, :data, :version, :last_modified_by, :is_published, 
-                :hero_image, :hero_image_alt, :about_image_1, :about_image_1_alt,
-                :about_image_2, :about_image_2_alt, :background_image, :background_image_alt,
-                :image_mapping)
+            INSERT INTO content (section, data, last_modified_by, is_published, 
+                image_1, image_1_alt, image_2, image_2_alt) 
+            VALUES (:section, :data, :last_modified_by, :is_published, 
+                :image_1, :image_1_alt, :image_2, :image_2_alt)
         ");
         
         return $stmt->execute([
             ':section' => $data['section'],
             ':data' => json_encode($data['data']),
-            ':version' => $data['version'],
             ':last_modified_by' => $data['last_modified_by'] ?? null,
             ':is_published' => $data['is_published'] ?? true,
-            ':hero_image' => $data['hero_image'] ?? null,
-            ':hero_image_alt' => $data['hero_image_alt'] ?? null,
-            ':about_image_1' => $data['about_image_1'] ?? null,
-            ':about_image_1_alt' => $data['about_image_1_alt'] ?? null,
-            ':about_image_2' => $data['about_image_2'] ?? null,
-            ':about_image_2_alt' => $data['about_image_2_alt'] ?? null,
-            ':background_image' => $data['background_image'] ?? null,
-            ':background_image_alt' => $data['background_image_alt'] ?? null,
-            ':image_mapping' => $data['image_mapping'] ?? null
+            ':image_1' => $data['image_1'] ?? null,
+            ':image_1_alt' => $data['image_1_alt'] ?? null,
+            ':image_2' => $data['image_2'] ?? null,
+            ':image_2_alt' => $data['image_2_alt'] ?? null
         ]);
     }
 
@@ -72,34 +62,9 @@ class Content {
             FROM content c
             LEFT JOIN users u ON c.last_modified_by = u.id
             WHERE c.section = :section 
-            ORDER BY c.version DESC
+            ORDER BY c.created_at DESC
         ");
         $stmt->execute([':section' => $section]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public static function getVersion($section, $version) {
-        $db = Database::getInstance()->getConnection();
-        $stmt = $db->prepare("
-            SELECT * FROM content 
-            WHERE section = :section AND version = :version
-        ");
-        $stmt->execute([
-            ':section' => $section,
-            ':version' => $version
-        ]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-
-    public static function getLatestVersion($section) {
-        $db = Database::getInstance()->getConnection();
-        $stmt = $db->prepare("
-            SELECT MAX(version) as max_version 
-            FROM content 
-            WHERE section = :section
-        ");
-        $stmt->execute([':section' => $section]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result['max_version'] ?? 0;
     }
 }

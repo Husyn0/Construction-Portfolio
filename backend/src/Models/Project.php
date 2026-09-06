@@ -29,24 +29,18 @@ class Project {
         $stmt = $db->prepare("
             SELECT * FROM projects 
             {$whereClause}
-            ORDER BY display_order ASC, created_at DESC 
+            ORDER BY created_at DESC 
             LIMIT :limit OFFSET :offset
         ");
         
-        //$params[':limit'] = $limit;
-        //$params[':offset'] = $offset;
-
-        //Represents the SQL INTEGER data type.
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-
         
         foreach ($params as $key => $value) {
             $stmt->bindValue($key, $value);
         }
         
         $stmt->execute();
-        //Array indexed by column name only. 
         $projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         // Decode tags JSON if exists
@@ -62,7 +56,6 @@ class Project {
             $countStmt->bindValue($key, $value);
         }
         $countStmt->execute($params);
-        //Array indexed by column name only. 
         $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
         
         return [
@@ -117,7 +110,7 @@ class Project {
     public static function update($id, $data) {
         $db = Database::getInstance()->getConnection();
         
-                // Handle tags JSON
+        // Handle tags JSON
         if (isset($data['tags']) && is_array($data['tags'])) {
             $data['tags'] = json_encode($data['tags']);
         }
@@ -131,7 +124,7 @@ class Project {
         }
         
         if (empty($sets)) {
-            return true; // Nothing to update
+            return true;
         } 
         $sql = "UPDATE projects SET " . implode(', ', $sets) . " WHERE id = :id";
         $stmt = $db->prepare($sql);
@@ -142,25 +135,5 @@ class Project {
         $db = Database::getInstance()->getConnection();
         $stmt = $db->prepare("DELETE FROM projects WHERE id = :id");
         return $stmt->execute([':id' => $id]);
-    }
-
-    public static function reorder($orders) {
-        $db = Database::getInstance()->getConnection();
-        $db->beginTransaction();
-        
-        try {
-            foreach ($orders as $order) {
-                $stmt = $db->prepare("UPDATE projects SET display_order = :order WHERE id = :id");
-                $stmt->execute([
-                    ':order' => $order['order'],
-                    ':id' => $order['id']
-                ]);
-            }
-            $db->commit();
-            return true;
-        } catch (\Exception $e) {
-            $db->rollBack();
-            throw $e;
-        }
     }
 }
