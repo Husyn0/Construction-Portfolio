@@ -1,10 +1,11 @@
 // frontend/src/components/Hero.jsx
 import React, { useEffect, useState } from 'react';
-import { fetchHeroContent, getImageUrl } from '../api/contentApi';
+import { fetchHeroContent } from '../api/contentApi';
 
 const Hero = () => {
   const [content, setContent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const loadContent = async () => {
@@ -24,10 +25,9 @@ const Hero = () => {
     return <div className="hero-loading">Loading...</div>;
   }
 
-  // Get hero image URL from backend or use fallback
-  const heroImageUrl = content?.hero_image_url || getImageUrl('home.jpg');
+  // Use image_1 as main background, fallback to default
+  const heroImageUrl = content?.hero_image_url || '/images/Home.jpg';
 
-  // Hero background style with image from backend
   const heroStyle = {
     backgroundImage: `url(${heroImageUrl})`,
     backgroundSize: 'cover',
@@ -37,19 +37,8 @@ const Hero = () => {
     position: 'relative'
   };
 
-  // Fallback style if image fails to load
-  const fallbackStyle = {
-    background: 'linear-gradient(135deg, #0f2838 0%, #1a3a4e 100%)',
-    minHeight: '100vh',
-    position: 'relative'
-  };
-
   return (
-    <section className="hero" style={heroStyle} onError={(e) => {
-      // If image fails, use fallback
-      e.target.style.background = 'linear-gradient(135deg, #0f2838 0%, #1a3a4e 100%)';
-    }}>
-      {/* Dark overlay for text readability */}
+    <section className="hero" style={heroStyle}>
       <div className="hero-overlay" />
       <div className="hero-container">
         <div className="hero-content">

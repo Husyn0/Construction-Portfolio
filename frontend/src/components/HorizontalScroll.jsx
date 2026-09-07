@@ -40,17 +40,24 @@ const HorizontalScroll = ({
     return () => window.removeEventListener('resize', updateVisibleCount);
   }, [cardWidth, gap]);
 
-  // Get visible items with circular logic
+  // Get visible items with circular logic - FIXED KEYS
   const getVisibleItems = useCallback(() => {
     const items = [];
     const start = currentIndex;
+    const visibleItemsCount = Math.min(visibleCount, totalItems);
     
-    for (let i = 0; i < visibleCount; i++) {
+    for (let i = 0; i < visibleItemsCount; i++) {
       const index = (start + i) % totalItems;
+      const element = childrenArray[index];
+      // Use a combination of index and a unique counter to ensure uniqueness
+      // When currentIndex changes, we want React to treat these as new items
+      // but we also need unique keys within the same render
+      const uniqueKey = `item-${index}-${currentIndex}-${i}-${Date.now()}`;
+      
       items.push({
         index,
-        element: childrenArray[index],
-        key: `item-${index}-${currentIndex}`
+        element,
+        key: uniqueKey
       });
     }
     return items;
@@ -58,7 +65,7 @@ const HorizontalScroll = ({
 
   const visibleItems = getVisibleItems();
 
-  // Smooth scroll with transition
+  // Scroll functions
   const scrollToIndex = useCallback((newIndex, smooth = true) => {
     if (isTransitioning) return;
     
@@ -109,7 +116,7 @@ const HorizontalScroll = ({
     };
   }, [isHovering, isDragging, isTransitioning, speed, scrollRight]);
 
-  // Mouse drag handling - smooth like first version
+  // Mouse drag handling
   const handleMouseDown = (e) => {
     setIsDragging(true);
     setStartX(e.pageX - containerRef.current.offsetLeft);
@@ -129,7 +136,6 @@ const HorizontalScroll = ({
     const walk = (x - startX);
     dragDistanceRef.current = walk;
     
-    // Visual feedback while dragging
     if (trackRef.current) {
       const offset = walk * 0.3;
       trackRef.current.style.transform = `translateX(${offset}px)`;
@@ -140,7 +146,7 @@ const HorizontalScroll = ({
     if (!isDragging) return;
     setIsDragging(false);
     
-    const threshold = 50; // Minimum drag distance to trigger scroll
+    const threshold = 50;
     
     if (Math.abs(dragDistanceRef.current) > threshold) {
       if (dragDistanceRef.current > 0) {
@@ -149,7 +155,6 @@ const HorizontalScroll = ({
         scrollRight();
       }
     } else {
-      // Snap back if not dragged enough
       if (trackRef.current) {
         trackRef.current.style.transition = 'transform 0.3s ease';
         trackRef.current.style.transform = 'translateX(0)';
@@ -262,7 +267,7 @@ const HorizontalScroll = ({
           transition: 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
         }}
       >
-        {visibleItems.map((item, index) => (
+        {visibleItems.map((item) => (
           <div 
             key={item.key}
             className="horizontal-scroll-item"
@@ -297,7 +302,7 @@ const HorizontalScroll = ({
       <div className="scroll-dots">
         {childrenArray.map((_, index) => (
           <button
-            key={index}
+            key={`dot-${index}`}
             className={`dot ${index === currentIndex ? 'active' : ''}`}
             onClick={() => scrollToIndex(index, true)}
             aria-label={`Go to item ${index + 1}`}

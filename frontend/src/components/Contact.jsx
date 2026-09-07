@@ -1,6 +1,29 @@
-import React from 'react';
+// frontend/src/components/Contact.jsx
+import React, { useEffect, useState } from 'react';
+import { fetchContactContent } from '../api/contentApi';
 
 const Contact = () => {
+  const [content, setContent] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadContent = async () => {
+      try {
+        const data = await fetchContactContent();
+        setContent(data);
+      } catch (error) {
+        console.error('Error loading contact content:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadContent();
+  }, []);
+
+  if (loading) {
+    return <div className="contact-loading">Loading...</div>;
+  }
+
   return (
     <section className="contact">
       <div className="contact-container">
@@ -17,21 +40,21 @@ const Contact = () => {
               <i className="fas fa-phone-alt"></i>
               <div>
                 <h4>Phone</h4>
-                <p>+1 (555) 123-4567</p>
+                <p>{content?.phone || '+1 (555) 123-4567'}</p>
               </div>
             </div>
             <div className="contact-item">
               <i className="fas fa-envelope"></i>
               <div>
                 <h4>Email</h4>
-                <p>info@buildport.com</p>
+                <p>{content?.email || 'info@buildport.com'}</p>
               </div>
             </div>
             <div className="contact-item">
               <i className="fas fa-map-marker-alt"></i>
               <div>
                 <h4>Address</h4>
-                <p>123 Construction Ave, Suite 200</p>
+                <p>{content?.address || '123 Construction Ave, Suite 200'}</p>
               </div>
             </div>
           </div>

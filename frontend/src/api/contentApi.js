@@ -23,6 +23,7 @@ const fetchContent = async (endpoint, defaultValue) => {
       throw new Error(`Failed to fetch ${endpoint} content`);
     }
     const result = await response.json();
+    
     // Handle different response structures
     if (result.data) {
       // If data is a string (JSON), parse it
@@ -49,14 +50,25 @@ export const fetchHeroContent = async () => {
       { number: '98%', label: 'Client Satisfaction' },
       { number: '15+', label: 'Years Experience' }
     ],
-    hero_image: 'home.jpg' // Default image name
+    image_1: 'home.jpg',     // Main hero background image
+    image_1_alt: 'Hero banner',
+    image_2: null,           // Optional secondary image
+    image_2_alt: null
   };
   
   const data = await fetchContent('hero', defaultHero);
-  // Ensure hero_image is handled
-  if (data.hero_image) {
-    data.hero_image_url = getImageUrl(data.hero_image);
+  
+  // Handle image fields from backend (image_1, image_2)
+  if (data.image_1) {
+    data.hero_image_url = getImageUrl(data.image_1);
+  } else {
+    data.hero_image_url = getImageUrl('home.jpg'); // Fallback
   }
+  
+  if (data.image_2) {
+    data.hero_image_2_url = getImageUrl(data.image_2);
+  }
+  
   return data;
 };
 
@@ -64,25 +76,34 @@ export const fetchHeroContent = async () => {
 export const fetchAboutContent = async () => {
   const defaultAbout = {
     tag: 'About Us',
-    title: 'Building Excellence Since 2010',
+    title: 'Building Excellence <span>Since 2010</span>',
     description: 'BuildPort is a full-service construction company dedicated to delivering superior quality, innovation, and reliability.',
     features: [
       { title: 'Quality Assurance', description: 'Rigorous quality control at every stage' },
       { title: 'On-Time Delivery', description: 'Projects completed within schedule' },
       { title: 'Sustainable Building', description: 'Eco-friendly materials and practices' }
     ],
-    main_image: 'about-1.jpg',
-    overlay_image: 'about-2.jpg'
+    image_1: 'about-1.jpg',      // Main image
+    image_1_alt: 'About us main image',
+    image_2: 'about-2.jpg',      // Secondary overlay image
+    image_2_alt: 'About us secondary image'
   };
   
   const data = await fetchContent('about', defaultAbout);
-  // Handle images
-  if (data.main_image) {
-    data.main_image_url = getImageUrl(data.main_image);
+  
+  // Handle both image fields
+  if (data.image_1) {
+    data.main_image_url = getImageUrl(data.image_1);
+  } else {
+    data.main_image_url = getImageUrl('about-1.jpg'); // Fallback
   }
-  if (data.overlay_image) {
-    data.overlay_image_url = getImageUrl(data.overlay_image);
+  
+  if (data.image_2) {
+    data.overlay_image_url = getImageUrl(data.image_2);
+  } else {
+    data.overlay_image_url = getImageUrl('about-2.jpg'); // Fallback
   }
+  
   return data;
 };
 
@@ -151,7 +172,7 @@ export const fetchServices = async () => {
 };
 
 // Projects Content
-export const fetchProjects = async () => {
+export const fetchProjects = async (filters = {}) => {
   const defaultProjects = [
     { 
       id: 1,
@@ -188,10 +209,19 @@ export const fetchProjects = async () => {
   ];
   
   try {
-    const response = await fetch(`${API_URL}/projects`);
+    // Build query string for filters
+    const params = new URLSearchParams();
+    if (filters.category) params.append('category', filters.category);
+    if (filters.featured !== undefined) params.append('featured', filters.featured);
+    if (filters.limit) params.append('limit', filters.limit);
+    if (filters.page) params.append('page', filters.page);
+    
+    const url = `${API_URL}/projects${params.toString() ? '?' + params.toString() : ''}`;
+    const response = await fetch(url);
     if (!response.ok) throw new Error('Failed to fetch projects');
     const result = await response.json();
-    // Handle nested data structure
+    
+    // Handle nested data structure from backend
     const projects = result.data?.data || result.data || result || [];
     
     return projects.map(project => ({
@@ -213,7 +243,9 @@ export const fetchTeam = async () => {
       role: 'CEO & Founder', 
       experience: '25+ years',
       avatar: null,
-      social: { linkedin: '#', twitter: '#', github: '#' }
+      social_linkedin: '#',
+      social_twitter: '#',
+      social_github: '#'
     },
     { 
       id: 2,
@@ -221,7 +253,9 @@ export const fetchTeam = async () => {
       role: 'Project Director', 
       experience: '18 years',
       avatar: null,
-      social: { linkedin: '#', twitter: '#', github: '#' }
+      social_linkedin: '#',
+      social_twitter: '#',
+      social_github: '#'
     },
     { 
       id: 3,
@@ -229,7 +263,9 @@ export const fetchTeam = async () => {
       role: 'Lead Architect', 
       experience: '15 years',
       avatar: null,
-      social: { linkedin: '#', twitter: '#', github: '#' }
+      social_linkedin: '#',
+      social_twitter: '#',
+      social_github: '#'
     },
     { 
       id: 4,
@@ -237,7 +273,9 @@ export const fetchTeam = async () => {
       role: 'Construction Manager', 
       experience: '12 years',
       avatar: null,
-      social: { linkedin: '#', twitter: '#', github: '#' }
+      social_linkedin: '#',
+      social_twitter: '#',
+      social_github: '#'
     }
   ];
   
@@ -249,6 +287,12 @@ export const fetchTeam = async () => {
     
     return team.map(member => ({
       ...member,
+      // Map social fields to consistent structure
+      social: {
+        linkedin: member.social_linkedin || '#',
+        twitter: member.social_twitter || '#',
+        github: member.social_github || '#'
+      },
       avatar_url: member.avatar ? getImageUrl(member.avatar) : null
     }));
   } catch (error) {
@@ -259,7 +303,6 @@ export const fetchTeam = async () => {
 
 // Pages Content (Static pages info)
 export const fetchPages = async () => {
-  // This could be from a CMS or static
   return [
     {
       id: 1,
@@ -290,4 +333,24 @@ export const fetchPages = async () => {
       link: '/resources'
     }
   ];
+};
+
+// Contact Content (from backend or static)
+export const fetchContactContent = async () => {
+  const defaultContact = {
+    email: 'info@buildport.com',
+    phone: '+1 (555) 123-4567',
+    address: '123 Construction Ave, Suite 200',
+    map_url: null
+  };
+  
+  try {
+    const response = await fetch(`${API_URL}/content/contact`);
+    if (!response.ok) throw new Error('Failed to fetch contact content');
+    const result = await response.json();
+    return result.data || defaultContact;
+  } catch (error) {
+    console.error('Error fetching contact content:', error);
+    return defaultContact;
+  }
 };

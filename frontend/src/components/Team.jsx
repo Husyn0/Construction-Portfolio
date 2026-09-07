@@ -55,13 +55,13 @@ const Team = () => {
               <i className="fas fa-briefcase"></i> {member.experience}
             </p>
             <div className="team-social">
-              <a href={member.social?.linkedin || '#'} className="social-link">
+              <a href={member.social?.linkedin || '#'} className="social-link" target="_blank" rel="noopener noreferrer">
                 <i className="fab fa-linkedin-in"></i>
               </a>
-              <a href={member.social?.twitter || '#'} className="social-link">
+              <a href={member.social?.twitter || '#'} className="social-link" target="_blank" rel="noopener noreferrer">
                 <i className="fab fa-twitter"></i>
               </a>
-              <a href={member.social?.github || '#'} className="social-link">
+              <a href={member.social?.github || '#'} className="social-link" target="_blank" rel="noopener noreferrer">
                 <i className="fab fa-github"></i>
               </a>
             </div>

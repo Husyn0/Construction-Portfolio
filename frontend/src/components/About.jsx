@@ -31,6 +31,10 @@ const About = () => {
   ];
 
   const features = content?.features || defaultFeatures;
+  
+  // image_1 = main image, image_2 = overlay image
+  const mainImageUrl = content?.main_image_url || '/images/about-1.jpg';
+  const overlayImageUrl = content?.overlay_image_url || '/images/about-2.jpg';
 
   return (
     <section className="about">
@@ -39,8 +43,8 @@ const About = () => {
           <div className="about-image-wrapper">
             <div className="about-image-main">
               <img 
-                src={content?.main_image_url || '/images/about-1.jpg'} 
-                alt="Construction site" 
+                src={mainImageUrl} 
+                alt={content?.image_1_alt || 'Construction site'} 
                 onError={(e) => {
                   e.target.src = '/images/about-1.jpg';
                 }}
@@ -48,8 +52,8 @@ const About = () => {
             </div>
             <div className="about-image-overlay">
               <img 
-                src={content?.overlay_image_url || '/images/about-2.jpg'} 
-                alt="Architecture design"
+                src={overlayImageUrl} 
+                alt={content?.image_2_alt || 'Architecture design'}
                 onError={(e) => {
                   e.target.src = '/images/about-2.jpg';
                 }}

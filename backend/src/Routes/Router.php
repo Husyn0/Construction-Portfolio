@@ -53,7 +53,12 @@ class Router {
             '/api/v1/auth/login' => ['POST'],
             '/api/v1/auth/register' => ['POST'],
             '/api/v1/content/hero' => ['GET'],
-        ];
+            '/api/v1/content/about' => ['GET'],
+            '/api/v1/content/contact' => ['GET'],
+            '/api/v1/services' => ['GET'],
+            '/api/v1/projects' => ['GET'],
+            '/api/v1/team' => ['GET'],
+    ]   ;
         
         // Check if route is in public routes list
         if (isset($publicRoutes[$route]) && in_array($method, $publicRoutes[$route])) {
@@ -63,6 +68,21 @@ class Router {
         // Public GET requests for content (except /api/v1/content/all which is protected)
         if ($method === 'GET' && strpos($route, '/api/v1/content/') === 0 && $route !== '/api/v1/content/all') {
             return true;
+        }
+        // Public GET requests for specific single resources (e.g., /api/v1/services/1)
+        // But NOT for admin routes
+        if ($method === 'GET') {
+            // Match single resource patterns
+            $patterns = [
+                '#^/api/v1/services/\d+$#',
+                '#^/api/v1/projects/\d+$#',
+                '#^/api/v1/team/\d+$#',
+            ];
+            foreach ($patterns as $pattern) {
+                if (preg_match($pattern, $route)) {
+                   return true;
+                }
+            }
         }
         
         return false;
