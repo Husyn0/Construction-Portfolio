@@ -5,9 +5,6 @@
 /admin-frontend/node_modules
 
 #backend
-/backend/.env
-/backend/.htaccess
-/backend/config
 /backend/migrations
 /backend/vendor/
 /backend/composer.lock
@@ -23,7 +20,6 @@ analytics-service/app/__pycache__/
 /analytics-service/app/models/__pycache__/
 /analytics-service/app/routes/__pycache__/
 /analytics-service/app/services/__pycache__/
-/analytics-service/.env
 
 # Security Reports
 /security-reports

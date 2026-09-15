@@ -1,7 +1,14 @@
 // admin-frontend/src/components/common/ImageUpload.jsx
 import React, { useState, useRef } from 'react';
 import { FaUpload, FaTrash, FaSpinner } from 'react-icons/fa';
-import { uploadImage, deleteImage } from '../../api/contentApi';
+import { 
+  uploadContentImage, 
+  deleteContentImage,
+  uploadServiceImage,
+  deleteServiceImage,
+  uploadProjectImage,
+  deleteProjectImage
+} from '../../api/contentApi';
 
 const ImageUpload = ({ 
   section, 
@@ -11,24 +18,49 @@ const ImageUpload = ({
   label = 'Image',
   altText = '',
   onAltTextChange,
-  imageMapping = {} // New prop for mapping
+  imageMapping = {},
+  itemId = null // For services/projects/team items
 }) => {
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [preview, setPreview] = useState(currentImage || null);
   const fileInputRef = useRef(null);
 
+  // Determine which upload function to use based on section
+  const getUploadFunction = () => {
+    if (section === 'services' && itemId) {
+      return uploadServiceImage;
+    } else if (section === 'projects' && itemId) {
+      return uploadProjectImage;
+    } else if (section === 'team') {
+      // Team uses content table for avatar images or separate endpoint
+      return uploadContentImage;
+    } else {
+      // hero, about, contact - content table
+      return uploadContentImage;
+    }
+  };
+
+  // Determine which delete function to use based on section
+  const getDeleteFunction = () => {
+    if (section === 'services' && itemId) {
+      return deleteServiceImage;
+    } else if (section === 'projects' && itemId) {
+      return deleteProjectImage;
+    } else {
+      return deleteContentImage;
+    }
+  };
+
   const handleFileSelect = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       alert('Please select an image file');
       return;
     }
 
-    // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert('Image must be less than 5MB');
       return;
@@ -37,13 +69,31 @@ const ImageUpload = ({
     setUploading(true);
 
     try {
-      const result = await uploadImage(section, file, field);
+      let result;
+      const uploadFn = getUploadFunction();
+      
+      if (section === 'services' && itemId) {
+        result = await uploadFn(itemId, file);
+      } else if (section === 'projects' && itemId) {
+        result = await uploadFn(itemId, file);
+      } else {
+        result = await uploadFn(section, file, field);
+      }
       
       if (result && result.path) {
-        // Store the path as returned by the API (relative path)
         setPreview(result.path);
-        // Pass the relative path to parent
         onImageChange(result.path, file.name, result);
+      } else if (result && result.image_path) {
+        setPreview(result.image_path);
+        onImageChange(result.image_path, file.name, result);
+      } else {
+        const path = result.path || result.image || result.url || result.file_path;
+        if (path) {
+          setPreview(path);
+          onImageChange(path, file.name, result);
+        } else {
+          throw new Error('No image path returned from server');
+        }
       }
     } catch (error) {
       console.error('Upload error:', error);
@@ -66,7 +116,16 @@ const ImageUpload = ({
     setDeleting(true);
 
     try {
-      await deleteImage(section, field);
+      const deleteFn = getDeleteFunction();
+      
+      if (section === 'services' && itemId) {
+        await deleteFn(itemId);
+      } else if (section === 'projects' && itemId) {
+        await deleteFn(itemId);
+      } else {
+        await deleteFn(section, field);
+      }
+      
       setPreview(null);
       onImageChange(null, '');
     } catch (error) {
@@ -81,41 +140,35 @@ const ImageUpload = ({
     fileInputRef.current?.click();
   };
 
-  // Fix: Get the correct image URL
   const getImageUrl = (path) => {
     if (!path) return null;
     
-    // If it's already a full URL, return it
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return path;
     }
     
-    // Remove any /api/v1 prefix if present
     let cleanPath = path;
+    
     if (cleanPath.startsWith('/api/v1')) {
       cleanPath = cleanPath.replace('/api/v1', '');
     }
     
-    // Ensure the path starts with /uploads
-    if (!cleanPath.startsWith('/uploads')) {
-      // If it's just a filename, add /uploads/ prefix
+    if (!cleanPath.startsWith('/uploads') && !cleanPath.startsWith('uploads')) {
       if (!cleanPath.includes('/')) {
         cleanPath = `/uploads/${cleanPath}`;
       } else {
-        // If it has a path but not /uploads, add it
         cleanPath = `/uploads/${cleanPath.replace(/^\/+/, '')}`;
       }
+    } else if (cleanPath.startsWith('uploads/')) {
+      cleanPath = `/${cleanPath}`;
     }
     
-    // Get the base URL (without /api/v1)
     const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-    // Remove /api/v1 if present in baseUrl
     const cleanBaseUrl = baseUrl.replace(/\/api\/v1$/, '');
     
     return `${cleanBaseUrl}${cleanPath}`;
   };
 
-  // Get the display name from mapping if available
   const getDisplayName = () => {
     if (imageMapping && imageMapping[field]) {
       return imageMapping[field].original || 'Uploaded image';
@@ -136,16 +189,14 @@ const ImageUpload = ({
           style={{ display: 'none' }}
         />
 
-        {preview || currentImage ? (
+        {(preview || currentImage) ? (
           <div className="image-preview">
             <img 
               src={getImageUrl(preview || currentImage)} 
               alt={getDisplayName()}
               onError={(e) => {
-                // Fallback if image fails to load
                 console.error('Failed to load image:', e.target.src);
                 e.target.style.display = 'none';
-                // Show placeholder
                 const parent = e.target.parentElement;
                 const placeholder = document.createElement('div');
                 placeholder.className = 'image-placeholder';
@@ -173,11 +224,6 @@ const ImageUpload = ({
                 {deleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
-            {imageMapping && imageMapping[field] && (
-              <div className="image-info">
-                <span>Original: {imageMapping[field].original}</span>
-              </div>
-            )}
           </div>
         ) : (
           <div className="image-placeholder" onClick={triggerFileInput}>

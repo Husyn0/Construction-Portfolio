@@ -98,6 +98,7 @@ const ServiceEditor = ({ data, onChange }) => {
           altText={formData.background_image_alt || ''}
           onAltTextChange={handleAltTextChange}
           imageMapping={formData.image_mapping || {}}
+          itemId={formData.id} // Pass the service ID if it exists
         />
 
         <InputField

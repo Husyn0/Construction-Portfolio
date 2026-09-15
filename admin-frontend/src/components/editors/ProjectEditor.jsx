@@ -203,6 +203,7 @@ const ProjectEditor = ({ data, onChange }) => {
                   altText={project.project_image_alt || ''}
                   onAltTextChange={(value) => handleProjectAltTextChange(index, value)}
                   imageMapping={project.image_mapping || {}}
+                  itemId={project.id} // Pass the project ID
                 />
 
                 <InputField
