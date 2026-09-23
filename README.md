@@ -1,40 +1,48 @@
 # Construction-Portfolio
 This project is portfolio web app for construction like company, where we have admin side front end , backend in addition to the  portfolio frontend
 
-# Start backend
+## Start backend
+```bash
 cd  backend
 composer install
 php -S localhost:8000
-
-# Start frontend
+```
+## Start frontend
+```bash
 cd frontend
 npm install
 npm start
-
-# Start Admin frontend
+```
+## Start Admin frontend
+```bash
 cd admin-frontend
 npm install
 npm start
-
-# open cli mysql
+```
+## open cli mysql
+```bash
 sudo  mysql -u mysqluser -p
-
-# Update remote origin
+```
+## Update remote origin
+```bash
 git remote set-url origin https://github.com/Husyn0/Construction-Portfolio.git
+```
 
-
-
-# Create and setup virtual environment:
+## python server
+### Create and setup virtual environment:
+```bash
 cd /var/www/analytics-service
 python3 -m venv web-fingerprint-analytic
 source web-fingerprint-analytic/bin/activate
 pip install -r requirements.txt
-
-# Start Python Analytics Service
+```
+### Start Python Analytics Service
+```bash
 cd ./analytics-service
 source web-fingerprint-analytic/bin/activate
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
-
-# Start PHP Backend
+```
+## Start PHP Backend
+```bash
 php -S localhost:8000 index.html
-
+```
