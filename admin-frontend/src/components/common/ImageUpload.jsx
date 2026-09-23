@@ -12,7 +12,7 @@ import {
 
 const ImageUpload = ({ 
   section, 
-  field = 'hero_image',
+  field = 'image_1', // Changed default from 'hero_image' to 'image_1'
   currentImage, 
   onImageChange,
   label = 'Image',
@@ -32,9 +32,6 @@ const ImageUpload = ({
       return uploadServiceImage;
     } else if (section === 'projects' && itemId) {
       return uploadProjectImage;
-    } else if (section === 'team') {
-      // Team uses content table for avatar images or separate endpoint
-      return uploadContentImage;
     } else {
       // hero, about, contact - content table
       return uploadContentImage;
@@ -77,6 +74,7 @@ const ImageUpload = ({
       } else if (section === 'projects' && itemId) {
         result = await uploadFn(itemId, file);
       } else {
+        // For hero/about, field should be 'image_1' or 'image_2'
         result = await uploadFn(section, file, field);
       }
       
@@ -123,6 +121,7 @@ const ImageUpload = ({
       } else if (section === 'projects' && itemId) {
         await deleteFn(itemId);
       } else {
+        // For hero/about, field should be 'image_1' or 'image_2'
         await deleteFn(section, field);
       }
       

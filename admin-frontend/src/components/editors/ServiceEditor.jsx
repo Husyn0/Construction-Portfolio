@@ -2,16 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import InputField from '../common/InputField';
 import TextAreaField from '../common/TextAreaField';
-import ImageUpload from '../common/ImageUpload';
 import { FaTrash, FaPlus } from "react-icons/fa";
 
 const ServiceEditor = ({ data, onChange }) => {
   const defaultData = {
     title: '',
     subtitle: '',
-    services: [],
-    background_image: null,
-    background_image_alt: ''
+    services: []
   };
 
   const [formData, setFormData] = useState({ ...defaultData, ...data });
@@ -44,23 +41,6 @@ const ServiceEditor = ({ data, onChange }) => {
     onChange(updated);
   };
 
-  const handleImageChange = (path, filename, uploadResult) => {
-    const updated = { 
-      ...formData, 
-      background_image: path,
-      background_image_filename: filename,
-      background_image_upload: uploadResult
-    };
-    setFormData(updated);
-    onChange(updated);
-  };
-
-  const handleAltTextChange = (value) => {
-    const updated = { ...formData, background_image_alt: value };
-    setFormData(updated);
-    onChange(updated);
-  };
-
   const handleServiceChange = (index, field, value) => {
     const updatedServices = [...formData.services];
     updatedServices[index] = { ...updatedServices[index], [field]: value };
@@ -70,7 +50,7 @@ const ServiceEditor = ({ data, onChange }) => {
   };
 
   const addService = () => {
-    const updatedServices = [...formData.services, { icon: 'fa-hard-hat', title: '', description: '' }];
+    const updatedServices = [...formData.services, { icon: 'fa-hard-hat', title: '', description: '', image: '' }];
     const updated = { ...formData, services: updatedServices };
     setFormData(updated);
     onChange(updated);
@@ -89,18 +69,6 @@ const ServiceEditor = ({ data, onChange }) => {
       <h3>Services Section Content</h3>
       
       <div className="editor-grid">
-        <ImageUpload
-          section="services"
-          field="background_image"
-          currentImage={formData.background_image}
-          onImageChange={handleImageChange}
-          label="Background Image"
-          altText={formData.background_image_alt || ''}
-          onAltTextChange={handleAltTextChange}
-          imageMapping={formData.image_mapping || {}}
-          itemId={formData.id} // Pass the service ID if it exists
-        />
-
         <InputField
           label="Section Title"
           value={formData.title}
@@ -146,6 +114,11 @@ const ServiceEditor = ({ data, onChange }) => {
                   placeholder="Full-service construction management..."
                   rows={2}
                 />
+                {service.image && (
+                  <div className="service-image-preview">
+                    <img src={service.image} alt={service.title} />
+                  </div>
+                )}
               </div>
               <button 
                 type="button" 

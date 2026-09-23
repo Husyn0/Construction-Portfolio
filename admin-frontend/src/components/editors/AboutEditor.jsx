@@ -11,10 +11,10 @@ const AboutEditor = ({ data, onChange }) => {
     title: '',
     description: '',
     features: [],
-    about_image_1: null,
-    about_image_1_alt: '',
-    about_image_2: null,
-    about_image_2_alt: ''
+    image_1: null,
+    image_1_alt: '',
+    image_2: null,
+    image_2_alt: ''
   };
 
   const [formData, setFormData] = useState({ ...defaultData, ...data });
@@ -82,27 +82,27 @@ const AboutEditor = ({ data, onChange }) => {
         <div className="about-images-grid">
           <ImageUpload
             section="about"
-            field="about_image_1"
-            currentImage={formData.about_image_1}
+            field="image_1"
+            currentImage={formData.image_1}
             onImageChange={(path, filename, uploadResult) => 
-              handleImageChange('about_image_1', path, filename, uploadResult)
+              handleImageChange('image_1', path, filename, uploadResult)
             }
             label="About Image 1"
-            altText={formData.about_image_1_alt || ''}
-            onAltTextChange={(value) => handleAltTextChange('about_image_1', value)}
+            altText={formData.image_1_alt || ''}
+            onAltTextChange={(value) => handleAltTextChange('image_1', value)}
             imageMapping={formData.image_mapping || {}}
           />
 
           <ImageUpload
             section="about"
-            field="about_image_2"
-            currentImage={formData.about_image_2}
+            field="image_2"
+            currentImage={formData.image_2}
             onImageChange={(path, filename, uploadResult) => 
-              handleImageChange('about_image_2', path, filename, uploadResult)
+              handleImageChange('image_2', path, filename, uploadResult)
             }
             label="About Image 2"
-            altText={formData.about_image_2_alt || ''}
-            onAltTextChange={(value) => handleAltTextChange('about_image_2', value)}
+            altText={formData.image_2_alt || ''}
+            onAltTextChange={(value) => handleAltTextChange('image_2', value)}
             imageMapping={formData.image_mapping || {}}
           />
         </div>

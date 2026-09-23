@@ -1,12 +1,33 @@
-// src/admin/components/editors/HeroEditor.jsx
-import React, { useState } from 'react';
+// admin-frontend/src/components/editors/HeroEditor.jsx
+import React, { useState, useEffect } from 'react';
 import InputField from '../common/InputField';
 import TextAreaField from '../common/TextAreaField';
 import StatEditor from '../common/StateEditor';
 import ImageUpload from '../common/ImageUpload';
 
 const HeroEditor = ({ data, onChange }) => {
-  const [formData, setFormData] = useState(data || { stats: [] });
+  const defaultData = {
+    badge: '',
+    title: '',
+    description: '',
+    stats: [],
+    image_1: null,
+    image_1_alt: '',
+    image_2: null,
+    image_2_alt: ''
+  };
+
+  const [formData, setFormData] = useState({ ...defaultData, ...data });
+
+  useEffect(() => {
+    if (data) {
+      setFormData(prev => ({
+        ...defaultData,
+        ...data,
+        stats: data.stats || []
+      }));
+    }
+  }, [data]);
 
   const handleChange = (field, value) => {
     const updated = { ...formData, [field]: value };
@@ -14,19 +35,19 @@ const HeroEditor = ({ data, onChange }) => {
     onChange(updated);
   };
 
-  const handleImageChange = (path, filename, uploadResult) => {
+  const handleImageChange = (field, path, filename, uploadResult) => {
     const updated = { 
       ...formData, 
-      hero_image: path,
-      hero_image_filename: filename,
-      hero_image_upload: uploadResult // Store the full upload result
+      [field]: path,
+      [`${field}_filename`]: filename,
+      [`${field}_upload`]: uploadResult
     };
     setFormData(updated);
     onChange(updated);
   };
 
-  const handleAltTextChange = (value) => {
-    const updated = { ...formData, hero_image_alt: value };
+  const handleAltTextChange = (field, value) => {
+    const updated = { ...formData, [`${field}_alt`]: value };
     setFormData(updated);
     onChange(updated);
   };
@@ -58,16 +79,33 @@ const HeroEditor = ({ data, onChange }) => {
       <h3>Hero Section Content</h3>
       
       <div className="editor-grid">
-        <ImageUpload
-          section="hero"
-          field="hero_image"
-          currentImage={formData.hero_image}
-          onImageChange={handleImageChange}
-          label="Hero Background Image"
-          altText={formData.hero_image_alt || ''}
-          onAltTextChange={handleAltTextChange}
-          imageMapping={formData.image_mapping || {}}
-        />
+        <div className="hero-images-grid">
+          <ImageUpload
+            section="hero"
+            field="image_1"
+            currentImage={formData.image_1}
+            onImageChange={(path, filename, uploadResult) => 
+              handleImageChange('image_1', path, filename, uploadResult)
+            }
+            label="Hero Image 1 (Main)"
+            altText={formData.image_1_alt || ''}
+            onAltTextChange={(value) => handleAltTextChange('image_1', value)}
+            imageMapping={formData.image_mapping || {}}
+          />
+
+          <ImageUpload
+            section="hero"
+            field="image_2"
+            currentImage={formData.image_2}
+            onImageChange={(path, filename, uploadResult) => 
+              handleImageChange('image_2', path, filename, uploadResult)
+            }
+            label="Hero Image 2 (Secondary)"
+            altText={formData.image_2_alt || ''}
+            onAltTextChange={(value) => handleAltTextChange('image_2', value)}
+            imageMapping={formData.image_mapping || {}}
+          />
+        </div>
 
         <InputField
           label="Badge Text"

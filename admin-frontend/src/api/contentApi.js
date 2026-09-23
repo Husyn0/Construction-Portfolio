@@ -13,7 +13,6 @@ const headers = () => {
 
 // ==================== CONTENT TABLE ROUTES (hero, about, contact) ====================
 
-// Fetch content from content table
 export const fetchContent = async (section) => {
   try {
     const response = await fetch(`${API_URL}/content/${section}`, {
@@ -33,7 +32,6 @@ export const fetchContent = async (section) => {
   }
 };
 
-// Save content to content table
 export const saveContent = async (section, data) => {
   try {
     const response = await fetch(`${API_URL}/content/${section}`, {
@@ -56,12 +54,14 @@ export const saveContent = async (section, data) => {
 };
 
 // Upload image for content table sections
-export const uploadContentImage = async (section, file, field = 'hero_image') => {
+// field should be 'image_1' or 'image_2' for hero/about
+export const uploadContentImage = async (section, file, field = 'image_1') => {
   try {
     const token = getToken();
     const formData = new FormData();
     formData.append('image', file);
     formData.append('field', field);
+    formData.append('original_name', file.name);
     
     const response = await fetch(`${API_URL}/content/${section}/upload-image`, {
       method: 'POST',
@@ -84,7 +84,8 @@ export const uploadContentImage = async (section, file, field = 'hero_image') =>
 };
 
 // Delete image from content table
-export const deleteContentImage = async (section, field = 'hero_image') => {
+// field should be 'image_1' or 'image_2' for hero/about
+export const deleteContentImage = async (section, field = 'image_1') => {
   try {
     const token = getToken();
     
