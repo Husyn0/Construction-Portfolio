@@ -178,7 +178,7 @@ public function uploadImage($id) {
         }
         
         // Validate file size (5MB max)
-        $maxSize = 5 * 1024 * 1024;
+        $maxSize = 25 * 1024 * 1024;
         if ($file['size'] > $maxSize) {
             return Response::error('Image too large. Max size: 5MB', 400);
         }

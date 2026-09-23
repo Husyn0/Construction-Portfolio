@@ -31,6 +31,13 @@ class AuthMiddleware {
         }
 
         $token = substr($authHeader, 7);
+
+        // Check blacklist FIRST
+        if (\App\Models\TokenBlacklist::isBlacklisted($token)) {
+            Response::unauthorized('Token has been revoked');
+            return false;
+        }
+        
         $decoded = $this->jwtService->verify($token);
         
         if (!$decoded) {

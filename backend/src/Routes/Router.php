@@ -88,7 +88,10 @@ class Router {
         return false;
     }
 
-    public function dispatch() {
+     public function dispatch() {
+        $matchedRoute = null;
+        $matchedParams = [];
+        
         foreach ($this->routes as $route) {
             if ($route['method'] !== $this->method) {
                 continue;
@@ -99,32 +102,35 @@ class Router {
             
             if (preg_match($pattern, $this->path, $matches)) {
                 array_shift($matches);
-                $this->params = $matches;
-                
-                // Check if route needs authentication
-                if (!$this->isPublicRoute($route['route'], $route['method'])) {
-                    $auth = new AuthMiddleware();
-                    $user = $auth->authenticate();
-                    if (!$user) {
-                        return;
-                    }
-                }
-                
-                // Call callback with parameters
-                if (is_callable($route['callback'])) {
-                    return call_user_func_array($route['callback'], $this->params);
-                }
-                
-                // If callback is array [Controller::class, 'method']
-                if (is_array($route['callback'])) {
-                    $controller = new $route['callback'][0]();
-                    $method = $route['callback'][1];
-                    return call_user_func_array([$controller, $method], $this->params);
-                }
+                $matchedRoute = $route;
+                $matchedParams = $matches;
+                break;
             }
         }
         
-        http_response_code(404);
-        echo json_encode(['success' => false, 'message' => 'Route not found']);
+        if (!$matchedRoute) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Route not found']);
+            return;
+        }
+        
+        // Auth check
+        if (!$this->isPublicRoute($matchedRoute['route'], $matchedRoute['method'])) {
+            $auth = new AuthMiddleware();
+            if (!$auth->authenticate()) {
+                return;
+            }
+        }
+        
+        // Call callback
+        $callback = $matchedRoute['callback'];
+        if (is_callable($callback)) {
+            return call_user_func_array($callback, $matchedParams);
+        }
+        if (is_array($callback)) {
+            $controller = new $callback[0]();
+            return call_user_func_array([$controller, $callback[1]], $matchedParams);
+        }
     }
+
 }

@@ -1,11 +1,16 @@
 # Construction-Portfolio
 This project is portfolio web app for construction like company, where we have admin side front end , backend in addition to the  portfolio frontend
 
-## Start backend
+## PHP Server
+### setup php backend
 ```bash
 cd  backend
 composer install
-php -S localhost:8000
+```
+### Start PHP Backend
+```bash
+cd backend
+php -S localhost:8000 index.php
 ```
 ## Start frontend
 ```bash
@@ -19,7 +24,7 @@ cd admin-frontend
 npm install
 npm start
 ```
-## open cli mysql
+## Mysql on CLI 
 ```bash
 sudo  mysql -u mysqluser -p
 ```
@@ -41,8 +46,4 @@ pip install -r requirements.txt
 cd ./analytics-service
 source web-fingerprint-analytic/bin/activate
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
-```
-## Start PHP Backend
-```bash
-php -S localhost:8000 index.html
 ```

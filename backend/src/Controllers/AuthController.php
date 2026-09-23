@@ -102,6 +102,18 @@ class AuthController {
     }
 
     public function logout() {
+        $user = $GLOBALS['user'] ?? null;
+        $token = $GLOBALS['raw_token'] ?? null;
+        
+        if ($token) {
+            // Decode to get expiry
+            $jwtService = new JWTService();
+            $decoded = $jwtService->decode($token);
+            $expiresAt = $decoded ? date('Y-m-d H:i:s', $decoded->exp) : date('Y-m-d H:i:s', time() + 86400);
+            
+            \App\Models\TokenBlacklist::add($token, $user['id'], $expiresAt);
+        }
+        
         return Response::success(null, 'Logged out successfully');
     }
 

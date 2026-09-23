@@ -1,12 +1,12 @@
-# ============================================================================
+##
 # BUILDPORT API - INDIVIDUAL TEST COMMANDS
 # Updated for new schema (no display_order, simplified content images)
 # ============================================================================
 
-# ============================================================================
-# 1. AUTHENTICATION TESTS
-# ============================================================================
-
+### ============================================================================
+### 1. AUTHENTICATION TESTS
+### ============================================================================
+```bash
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "▶ 1. AUTHENTICATION TESTS"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -16,13 +16,15 @@ curl -s -X POST \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@buildport.com","password":"admin123"}' \
   http://localhost:8000/api/v1/auth/login
-
+```
+```bash
 echo ""
 echo "▶ 1.2 Get Current User (Protected)"
 curl -s -X GET \
   -H "Authorization: Bearer $TOKEN" \
   http://localhost:8000/api/v1/auth/me
-
+```
+```bash
 echo ""
 echo "▶ 1.3 Update Profile (Protected)"
 curl -s -X PUT \
@@ -30,7 +32,8 @@ curl -s -X PUT \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"name":"Admin User Updated","email":"admin@buildport.com"}' \
   http://localhost:8000/api/v1/auth/update
-
+```
+```bash
 echo ""
 echo "▶ 1.4 Logout (Protected)"
 curl -s -X POST \
@@ -39,11 +42,11 @@ curl -s -X POST \
 
 echo ""
 echo ""
-
-# ============================================================================
-# 2. CONTENT TESTS (Updated - No version column)
-# ============================================================================
-
+```
+### ============================================================================
+### 2. CONTENT TESTS (Updated - No version column)
+### ============================================================================
+```bash
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "▶ 2. CONTENT TESTS (Simplified - No versions)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -51,13 +54,15 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "▶ 2.1 Get Hero Content (Public)"
 curl -s -X GET \
   http://localhost:8000/api/v1/content/hero
-
+```
+```bash
 echo ""
 echo "▶ 2.2 Get All Content (Protected)"
 curl -s -X GET \
   -H "Authorization: Bearer $TOKEN" \
   http://localhost:8000/api/v1/content/all
-
+```
+```bash
 echo ""
 echo "▶ 2.3 Update Hero Content with Images (Protected)"
 curl -s -X PUT \
@@ -74,18 +79,20 @@ curl -s -X PUT \
         {"number": "25", "label": "Awards"}
       ]
     },
-    "image_1": "/uploads/content/hero_image.jpg",
+    "image_1": "$HOME/Desktop/VioletPro/wallpaper/arch1.png",
     "image_1_alt": "Hero banner image",
-    "image_2": "/uploads/content/hero_image_2.jpg",
+    "image_2": "$HOME/Desktop/VioletPro/wallpaper/arch1.png",
     "image_2_alt": "Hero secondary image"
   }' \
   http://localhost:8000/api/v1/content/hero
-
+```
+```bash
 echo ""
 echo "▶ 2.4 Get About Content (Public)"
 curl -s -X GET \
   http://localhost:8000/api/v1/content/about
-
+```
+```bash
 echo ""
 echo "▶ 2.5 Update About Content with Images (Protected)"
 curl -s -X PUT \
@@ -97,13 +104,14 @@ curl -s -X PUT \
       "description": "We are a premier construction company",
       "mission": "To build excellence"
     },
-    "image_1": "/uploads/content/about_image1.jpg",
+    "image_1": "$HOME/Desktop/VioletPro/wallpaper/arch1.png",
     "image_1_alt": "About us image 1",
-    "image_2": "/uploads/content/about_image2.jpg",
+    "image_2": "$HOME/Desktop/VioletPro/wallpaper/arch1.png",
     "image_2_alt": "About us image 2"
   }' \
   http://localhost:8000/api/v1/content/about
-
+```
+```bash
 echo ""
 echo "▶ 2.6 Get Content History (Protected) - Shows all versions by created_at"
 curl -s -X GET \
@@ -112,11 +120,12 @@ curl -s -X GET \
 
 echo ""
 echo ""
+```
+### ============================================================================
+### 3. PROJECT TESTS (CRUD - No reorder)
+### ============================================================================
 
-# ============================================================================
-# 3. PROJECT TESTS (CRUD - No reorder)
-# ============================================================================
-
+```bash
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "▶ 3. PROJECT TESTS (No reorder)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -125,25 +134,29 @@ echo "▶ 3.1 Get All Projects (Protected)"
 curl -s -X GET \
   -H "Authorization: Bearer $TOKEN" \
   http://localhost:8000/api/v1/projects
-
+```
+```bash
 echo ""
 echo "▶ 3.2 Get Projects with Pagination (Protected)"
 curl -s -X GET \
   -H "Authorization: Bearer $TOKEN" \
   "http://localhost:8000/api/v1/projects?limit=5&page=1"
-
+```
+```bash
 echo ""
 echo "▶ 3.3 Get Projects with Category Filter (Protected)"
 curl -s -X GET \
   -H "Authorization: Bearer $TOKEN" \
   "http://localhost:8000/api/v1/projects?category=Commercial"
-
+```
+```bash
 echo ""
 echo "▶ 3.4 Get Featured Projects (Protected)"
 curl -s -X GET \
   -H "Authorization: Bearer $TOKEN" \
   "http://localhost:8000/api/v1/projects?featured=true"
-
+```
+```bash
 echo ""
 echo "▶ 3.5 Create Project (Protected)"
 curl -s -X POST \
@@ -158,13 +171,15 @@ curl -s -X POST \
     "is_featured": 1
   }' \
   http://localhost:8000/api/v1/projects
-
+```
+```bash
 echo ""
 echo "▶ 3.6 Get Single Project (Replace 2 with actual ID from create response)"
 curl -s -X GET \
   -H "Authorization: Bearer $TOKEN" \
   http://localhost:8000/api/v1/projects/3
-
+```
+```bash
 echo ""
 echo "▶ 3.7 Update Project (Replace 2 with actual ID)"
 curl -s -X PUT \
@@ -175,7 +190,8 @@ curl -s -X PUT \
     "description": "Updated description"
   }' \
   http://localhost:8000/api/v1/projects/3
-
+```
+```bash
 echo ""
 echo "▶ 3.8 Delete Project (Replace 2 with actual ID)"
 curl -s -X DELETE \
@@ -184,11 +200,12 @@ curl -s -X DELETE \
 
 echo ""
 echo ""
+```
 
-# ============================================================================
-# 4. SERVICE TESTS (CRUD - With image upload)
-# ============================================================================
-
+### ============================================================================
+### 4. SERVICE TESTS (CRUD - With image upload)
+### ============================================================================
+```bash
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "▶ 4. SERVICE TESTS (With image support)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -197,7 +214,8 @@ echo "▶ 4.1 Get All Services (Protected)"
 curl -s -X GET \
   -H "Authorization: Bearer $TOKEN" \
   http://localhost:8000/api/v1/services
-
+```
+```bash
 echo ""
 echo "▶ 4.2 Create Service with Image (Protected)"
 curl -s -X POST \
@@ -210,20 +228,23 @@ curl -s -X POST \
     "image": "/uploads/services.jpg"
   }' \
   http://localhost:8000/api/v1/services
-
+```
+```bash
 echo ""
 echo "▶ 4.3 Get Single Service (Replace 2 with actual ID)"
 curl -s -X GET \
   -H "Authorization: Bearer $TOKEN" \
   http://localhost:8000/api/v1/services/4
-
+```
+```bash
 echo ""
 echo "▶ 4.4 Upload Service Image (Replace 2 with actual ID)"
 curl -s -X POST \
   -H "Authorization: Bearer $TOKEN" \
-  -F "image=@/home/hkali/Desktop/VioletPro/backend/uploads/services.jpg" \
+  -F "image=@$HOME/Desktop/VioletPro/wallpaper/arch1.png" \
   http://localhost:8000/api/v1/services/4/upload-image
-
+```
+```bash
 echo ""
 echo "▶ 4.5 Update Service (Replace 2 with actual ID)"
 curl -s -X PUT \
@@ -235,13 +256,15 @@ curl -s -X PUT \
     "icon": "fa-building-o"
   }' \
   http://localhost:8000/api/v1/services/5
-
+```
+```bash
 echo ""
 echo "▶ 4.6 Delete Service Image (Replace 2 with actual ID)"
 curl -s -X DELETE \
   -H "Authorization: Bearer $TOKEN" \
   http://localhost:8000/api/v1/services/3/delete-image
-
+```
+```bash
 echo ""
 echo "▶ 4.7 Delete Service (Replace 2 with actual ID)"
 curl -s -X DELETE \
@@ -250,11 +273,11 @@ curl -s -X DELETE \
 
 echo ""
 echo ""
-
-# ============================================================================
-# 5. TEAM TESTS (CRUD - No reorder)
-# ============================================================================
-
+```
+### ============================================================================
+### 5. TEAM TESTS (CRUD - No reorder)
+### ============================================================================
+```bash
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "▶ 5. TEAM TESTS (No reorder)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -263,7 +286,8 @@ echo "▶ 5.1 Get All Team Members (Protected)"
 curl -s -X GET \
   -H "Authorization: Bearer $TOKEN" \
   http://localhost:8000/api/v1/team
-
+```
+```bash
 echo ""
 echo "▶ 5.2 Create Team Member (Protected)"
 curl -s -X POST \
@@ -280,13 +304,15 @@ curl -s -X POST \
     }
   }' \
   http://localhost:8000/api/v1/team
-
+```
+```bash
 echo ""
 echo "▶ 5.3 Get Single Team Member (Replace 2 with actual ID)"
 curl -s -X GET \
   -H "Authorization: Bearer $TOKEN" \
   http://localhost:8000/api/v1/team/2
-
+```
+```bash
 echo ""
 echo "▶ 5.4 Update Team Member (Replace 2 with actual ID)"
 curl -s -X PUT \
@@ -298,7 +324,8 @@ curl -s -X PUT \
     "experience": "25 years"
   }' \
   http://localhost:8000/api/v1/team/2
-
+```
+```bash
 echo ""
 echo "▶ 5.5 Delete Team Member (Replace 2 with actual ID)"
 curl -s -X DELETE \
@@ -307,11 +334,11 @@ curl -s -X DELETE \
 
 echo ""
 echo ""
-
-# ============================================================================
-# 6. IMAGE UPLOAD TESTS (Updated for new schema)
-# ============================================================================
-
+```
+### ============================================================================
+### 6. IMAGE UPLOAD TESTS (Updated for new schema)
+### ============================================================================
+```bash
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "▶ 6. CONTENT IMAGE UPLOAD TESTS (image_1, image_2)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -319,45 +346,50 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "▶ 6.1 Upload Hero Image 1 (Protected)"
 curl -s -X POST \
   -H "Authorization: Bearer $TOKEN" \
-  -F "image=@/home/hkali/Desktop/VioletPro/backend/uploads/hero.jpg" \
+  -F "image=@$HOME/Desktop/VioletPro/wallpaper/arch1.png" \
   -F "field=image_1" \
   -F "original_name=hero_main.jpg" \
   http://localhost:8000/api/v1/content/hero/upload-image
-
+```
+```bash
 echo ""
 echo "▶ 6.2 Upload Hero Image 2 (Protected)"
 curl -s -X POST \
   -H "Authorization: Bearer $TOKEN" \
-  -F "image=@/home/hkali/Desktop/VioletPro/backend/uploads/hero_alt.jpg" \
+  -F "image=@$HOME/Desktop/VioletPro/wallpaper/arch1.png" \
   -F "field=image_2" \
   -F "original_name=hero_alternate.jpg" \
   http://localhost:8000/api/v1/content/hero/upload-image
-
+```
+```bash
 echo ""
 echo "▶ 6.3 Upload About Image 1 (Protected)"
 curl -s -X POST \
   -H "Authorization: Bearer $TOKEN" \
-  -F "image=@/home/hkali/Desktop/VioletPro/backend/uploads/about1.jpg" \
+  -F "image=@$HOME/Desktop/VioletPro/wallpaper/arch1.png" \
   -F "field=image_1" \
   -F "original_name=about_main.jpg" \
   http://localhost:8000/api/v1/content/about/upload-image
-
+```
+```bash
 echo ""
 echo "▶ 6.4 Upload About Image 2 (Protected)"
 curl -s -X POST \
   -H "Authorization: Bearer $TOKEN" \
-  -F "image=@/home/hkali/Desktop/VioletPro/backend/uploads/about2.jpg" \
+  -F "image=@$HOME/Desktop/VioletPro/wallpaper/arch1.png" \
   -F "field=image_2" \
   -F "original_name=about_secondary.jpg" \
   http://localhost:8000/api/v1/content/about/upload-image
-
+```
+```bash
 echo ""
 echo "▶ 6.5 Delete Hero Image 1 (Protected)"
 curl -s -X DELETE \
   -H "Authorization: Bearer $TOKEN" \
   -F "field=image_1" \
   http://localhost:8000/api/v1/content/hero/delete-image
-
+```
+```bash
 echo ""
 echo "▶ 6.6 Delete Hero Image 2 (Protected)"
 curl -s -X DELETE \
@@ -367,11 +399,11 @@ curl -s -X DELETE \
 
 echo ""
 echo ""
-
-# ============================================================================
-# 7. BULK CREATE (Create multiple records at once)
-# ============================================================================
-
+```
+### ============================================================================
+### 7. BULK CREATE (Create multiple records at once)
+### ============================================================================
+```bash
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "▶ 7. BULK CREATE TESTS"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -382,11 +414,12 @@ for i in 1 2 3; do
   curl -s -X POST \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer $TOKEN" \
-    -d "{\"title\":\"Test Project $i\",\"description\":\"Test project $i description\",\"category\":\"Test\",\"location\":\"Test Location\"}" \
+    -d "{"title":"Test Project $i","description":"Test project $i description","category":"Test","location":"Test Location"}" \
     http://localhost:8000/api/v1/projects
   echo ""
 done
-
+```
+```bash
 echo "▶ 7.2 Create 3 Services with Images in a loop"
 for i in 1 2 3; do
   echo "Creating Service $i..."
@@ -397,7 +430,8 @@ for i in 1 2 3; do
     http://localhost:8000/api/v1/services
   echo ""
 done
-
+```
+```bash
 echo "▶ 7.3 Create 3 Team Members in a loop"
 for i in 1 2 3; do
   echo "Creating Team Member $i..."
@@ -411,11 +445,11 @@ done
 
 echo ""
 echo ""
-
-# ============================================================================
-# 8. ERROR TESTING (These should fail)
-# ============================================================================
-
+```
+### ============================================================================
+### 8. ERROR TESTING (These should fail)
+### ============================================================================
+```bash
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "▶ 8. ERROR TESTING (These should fail)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -425,38 +459,44 @@ curl -s -X POST \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@buildport.com","password":"wrongpassword"}' \
   http://localhost:8000/api/v1/auth/login
-
+```
+```bash
 echo ""
 echo "▶ 8.2 Non-existent Email (Should return 401)"
 curl -s -X POST \
   -H "Content-Type: application/json" \
   -d '{"email":"nonexistent@buildport.com","password":"admin123"}' \
   http://localhost:8000/api/v1/auth/login
-
+```
+```bash
 echo ""
 echo "▶ 8.3 Invalid Token (Should return 401)"
 curl -s -X GET \
   -H "Authorization: Bearer invalid_token_12345" \
   http://localhost:8000/api/v1/auth/me
-
+```
+```bash
 echo ""
 echo "▶ 8.4 No Token (Should return 401)"
 curl -s -X GET \
   http://localhost:8000/api/v1/auth/me
-
+```
+```bash
 echo ""
 echo "▶ 8.5 Get Non-existent Project (Should return 404)"
 curl -s -X GET \
   -H "Authorization: Bearer $TOKEN" \
   http://localhost:8000/api/v1/projects/99999
-
+```
+```bash
 echo ""
 echo "▶ 8.6 Upload image to non-existent service (Should return 404)"
 curl -s -X POST \
   -H "Authorization: Bearer $TOKEN" \
   -F "image=@/home/hkali/Desktop/VioletPro/backend/uploads/test.jpg" \
   http://localhost:8000/api/v1/services/99999/upload-image
-
+```
+```bash
 echo ""
 echo "▶ 8.7 Delete image from non-existent service (Should return 404)"
 curl -s -X DELETE \
@@ -469,7 +509,7 @@ echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "✅ TEST COMPLETE"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-# ============================================================================
+```
+## 
 # END OF TESTS
-# ============================================================================
+##

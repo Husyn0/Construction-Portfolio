@@ -190,110 +190,110 @@ class ContentController {
     /**
      * Upload image for content section
      */
-public function uploadImage($section) {
-    try {
-        // Log everything
-        error_log("=== UPLOAD IMAGE CALLED ===");
-        error_log("Section: " . $section);
-        error_log("FILES: " . print_r($_FILES, true));
-        error_log("POST: " . print_r($_POST, true));
-        
-        $user = $GLOBALS['user'] ?? null;
-        if (!$user) {
-            error_log("User not authenticated");
-            return Response::error('Unauthorized', 401);
+    public function uploadImage($section) {
+        try {
+            // Log everything
+            error_log("=== UPLOAD IMAGE CALLED ===");
+            error_log("Section: " . $section);
+            error_log("FILES: " . print_r($_FILES, true));
+            error_log("POST: " . print_r($_POST, true));
+            
+            $user = $GLOBALS['user'] ?? null;
+            if (!$user) {
+                error_log("User not authenticated");
+                return Response::error('Unauthorized', 401);
+            }
+            
+            if (!isset($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
+                error_log("File upload error: " . ($_FILES['image']['error'] ?? 'No file'));
+                return Response::error('No image file provided or upload error', 400);
+            }
+            
+            $file = $_FILES['image'];
+            $imageField = $_POST['field'] ?? 'image_1';
+            $originalName = $_POST['original_name'] ?? $file['name'];
+            
+            error_log("Image Field: " . $imageField);
+            error_log("Original Name: " . $originalName);
+            error_log("Temp File: " . $file['tmp_name']);
+            
+            // Validate image type
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+            
+            error_log("MIME Type: " . $mimeType);
+            
+            if (!in_array($mimeType, $allowedTypes)) {
+                return Response::error('Invalid image type. Allowed: JPEG, PNG, WEBP, GIF', 400);
+            }
+            
+            // Validate file size (5MB max)
+            $maxSize = 25 * 1024 * 1024;
+            if ($file['size'] > $maxSize) {
+                return Response::error('Image too large. Max size: 5MB', 400);
+            }
+            
+            // Generate unique filename
+            $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+            $baseName = pathinfo($originalName, PATHINFO_FILENAME);
+            $cleanBaseName = preg_replace('/[^a-zA-Z0-9_-]/', '', $baseName);
+            $filename = $cleanBaseName . '_' . time() . '_' . uniqid() . '.' . $extension;
+            
+            // Create upload directory if it doesn't exist
+            $uploadDir = __DIR__ . '/../../uploads/content/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+                error_log("Created upload directory: " . $uploadDir);
+            }
+            
+            // Move uploaded file
+            $targetPath = $uploadDir . $filename;
+            error_log("Target Path: " . $targetPath);
+            
+            if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+                error_log("Failed to move uploaded file");
+                return Response::error('Failed to upload image', 500);
+            }
+            
+            $imagePath = '/uploads/content/' . $filename;
+            error_log("Image Path: " . $imagePath);
+            
+            // Update database
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM content WHERE section = ? ORDER BY created_at DESC LIMIT 1");
+            $stmt->execute([$section]);
+            $currentContent = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            error_log("Current Content: " . print_r($currentContent, true));
+            
+            if ($currentContent) {
+                error_log("Updating existing record ID: " . $currentContent['id']);
+                $stmt = $db->prepare("UPDATE content SET {$imageField} = ? WHERE id = ?");
+                $result = $stmt->execute([$imagePath, $currentContent['id']]);
+                error_log("Update result: " . ($result ? 'SUCCESS' : 'FAILED'));
+            } else {
+                error_log("Creating new record");
+                $stmt = $db->prepare("INSERT INTO content (section, data, {$imageField}, is_published) VALUES (?, '{}', ?, 1)");
+                $result = $stmt->execute([$section, $imagePath]);
+                error_log("Insert result: " . ($result ? 'SUCCESS' : 'FAILED'));
+            }
+            
+            return Response::success([
+                'success' => true,
+                'path' => $imagePath,
+                'url' => $this->getImageUrl($imagePath),
+                'original_name' => $originalName,
+                'field' => $imageField
+            ], 'Image uploaded successfully');
+            
+        } catch (Exception $e) {
+            error_log("EXCEPTION: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return Response::error('Upload failed: ' . $e->getMessage(), 500);
         }
-        
-        if (!isset($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
-            error_log("File upload error: " . ($_FILES['image']['error'] ?? 'No file'));
-            return Response::error('No image file provided or upload error', 400);
-        }
-        
-        $file = $_FILES['image'];
-        $imageField = $_POST['field'] ?? 'image_1';
-        $originalName = $_POST['original_name'] ?? $file['name'];
-        
-        error_log("Image Field: " . $imageField);
-        error_log("Original Name: " . $originalName);
-        error_log("Temp File: " . $file['tmp_name']);
-        
-        // Validate image type
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mimeType = finfo_file($finfo, $file['tmp_name']);
-        finfo_close($finfo);
-        
-        error_log("MIME Type: " . $mimeType);
-        
-        if (!in_array($mimeType, $allowedTypes)) {
-            return Response::error('Invalid image type. Allowed: JPEG, PNG, WEBP, GIF', 400);
-        }
-        
-        // Validate file size (5MB max)
-        $maxSize = 5 * 1024 * 1024;
-        if ($file['size'] > $maxSize) {
-            return Response::error('Image too large. Max size: 5MB', 400);
-        }
-        
-        // Generate unique filename
-        $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-        $baseName = pathinfo($originalName, PATHINFO_FILENAME);
-        $cleanBaseName = preg_replace('/[^a-zA-Z0-9_-]/', '', $baseName);
-        $filename = $cleanBaseName . '_' . time() . '_' . uniqid() . '.' . $extension;
-        
-        // Create upload directory if it doesn't exist
-        $uploadDir = __DIR__ . '/../../uploads/content/';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-            error_log("Created upload directory: " . $uploadDir);
-        }
-        
-        // Move uploaded file
-        $targetPath = $uploadDir . $filename;
-        error_log("Target Path: " . $targetPath);
-        
-        if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
-            error_log("Failed to move uploaded file");
-            return Response::error('Failed to upload image', 500);
-        }
-        
-        $imagePath = '/uploads/content/' . $filename;
-        error_log("Image Path: " . $imagePath);
-        
-        // Update database
-        $db = Database::getInstance()->getConnection();
-        $stmt = $db->prepare("SELECT * FROM content WHERE section = ? ORDER BY created_at DESC LIMIT 1");
-        $stmt->execute([$section]);
-        $currentContent = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        error_log("Current Content: " . print_r($currentContent, true));
-        
-        if ($currentContent) {
-            error_log("Updating existing record ID: " . $currentContent['id']);
-            $stmt = $db->prepare("UPDATE content SET {$imageField} = ? WHERE id = ?");
-            $result = $stmt->execute([$imagePath, $currentContent['id']]);
-            error_log("Update result: " . ($result ? 'SUCCESS' : 'FAILED'));
-        } else {
-            error_log("Creating new record");
-            $stmt = $db->prepare("INSERT INTO content (section, data, {$imageField}, is_published) VALUES (?, '{}', ?, 1)");
-            $result = $stmt->execute([$section, $imagePath]);
-            error_log("Insert result: " . ($result ? 'SUCCESS' : 'FAILED'));
-        }
-        
-        return Response::success([
-            'success' => true,
-            'path' => $imagePath,
-            'url' => $this->getImageUrl($imagePath),
-            'original_name' => $originalName,
-            'field' => $imageField
-        ], 'Image uploaded successfully');
-        
-    } catch (Exception $e) {
-        error_log("EXCEPTION: " . $e->getMessage());
-        error_log("Stack trace: " . $e->getTraceAsString());
-        return Response::error('Upload failed: ' . $e->getMessage(), 500);
     }
-}
 
     /**
      * Delete image for content section
@@ -305,14 +305,52 @@ public function uploadImage($section) {
                 return Response::error('Unauthorized', 401);
             }
             
-            $imageField = $_POST['field'] ?? 'image_1';
+            // PHP does NOT populate $_POST for DELETE — parse manually
+            $imageField = 'image_1';
+            
+            // Try $_POST first (works if method is POST)
+            if (isset($_POST['field'])) {
+                $imageField = $_POST['field'];
+            } else {
+                // Parse raw input for DELETE
+                $rawInput = file_get_contents('php://input');
+                $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+                
+                if (strpos($contentType, 'multipart/form-data') !== false) {
+                    // Parse multipart manually
+                    preg_match('/name="field"\s*\r?\n\r?\n([^\r\n]+)/', $rawInput, $m);
+                    if (!empty($m[1])) {
+                        $imageField = trim($m[1]);
+                    }
+                } elseif (strpos($contentType, 'application/x-www-form-urlencoded') !== false) {
+                    parse_str($rawInput, $parsed);
+                    if (isset($parsed['field'])) {
+                        $imageField = $parsed['field'];
+                    }
+                } elseif (strpos($contentType, 'application/json') !== false) {
+                    $parsed = json_decode($rawInput, true);
+                    if (isset($parsed['field'])) {
+                        $imageField = $parsed['field'];
+                    }
+                }
+            }
+            
+            error_log("Delete image - Section: $section, Field: $imageField");
             
             $db = Database::getInstance()->getConnection();
 
-            // Get current image path
-            $stmt = $db->prepare("SELECT {$imageField} FROM content WHERE section = ? ORDER BY created_at DESC LIMIT 1");
+            // Get latest record ID with this field NOT NULL
+            $stmt = $db->prepare("
+                SELECT id, {$imageField} 
+                FROM content 
+                WHERE section = ? AND {$imageField} IS NOT NULL 
+                ORDER BY created_at DESC 
+                LIMIT 1
+            ");
             $stmt->execute([$section]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            error_log("Delete image - Query result: " . print_r($result, true));
             
             if (!$result || empty($result[$imageField])) {
                 return Response::error('No image to delete', 404);
@@ -326,13 +364,14 @@ public function uploadImage($section) {
                 unlink($fullPath);
             }
             
-            // Remove from database
-            $stmt = $db->prepare("UPDATE content SET {$imageField} = NULL WHERE section = ? ORDER BY created_at DESC LIMIT 1");
-            $stmt->execute([$section]);
+            // Update ONLY the specific row (no ORDER BY LIMIT — invalid in UPDATE)
+            $stmt = $db->prepare("UPDATE content SET {$imageField} = NULL WHERE id = ?");
+            $stmt->execute([$result['id']]);
             
             return Response::success(null, 'Image deleted successfully');
             
         } catch (Exception $e) {
+            error_log("deleteImage error: " . $e->getMessage());
             return Response::error('Delete failed: ' . $e->getMessage(), 500);
         }
     }

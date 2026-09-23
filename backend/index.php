@@ -96,9 +96,7 @@ $router->post("$api/auth/logout", [$controllers . 'AuthController', 'logout']);
 $router->put("$api/auth/update", [$controllers . 'AuthController', 'updateProfile']);
 
 // Content Routes (Hero, About, Services, Contact)
-$router->get("$api/content/{section}", [$controllers . 'ContentController', 'get']);
 $router->get("$api/content/all", [$controllers . 'ContentController', 'getAll']);
-$router->put("$api/content/{section}", [$controllers . 'ContentController', 'update']);
 $router->get("$api/content/{section}/history", [$controllers . 'ContentController', 'history']);
 $router->post("$api/content/{section}/revert/{version}", [$controllers . 'ContentController', 'revert']);
 
@@ -106,6 +104,10 @@ $router->post("$api/content/{section}/revert/{version}", [$controllers . 'Conten
 $router->post("$api/content/{section}/upload-image", [$controllers . 'ContentController', 'uploadImage']);
 $router->put("$api/content/{section}/upload-image", [$controllers . 'ContentController', 'uploadImage']);
 $router->delete("$api/content/{section}/delete-image", [$controllers . 'ContentController', 'deleteImage']);
+// Generic {section} routes LAST
+$router->get("$api/content/{section}", [$controllers . 'ContentController', 'get']);
+$router->put("$api/content/{section}", [$controllers . 'ContentController', 'update']);
+
 
 // Project Routes (separate table)
 $router->get("$api/projects", [$controllers . 'ProjectController', 'index']);
