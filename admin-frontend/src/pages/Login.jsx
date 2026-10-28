@@ -1,5 +1,6 @@
 // admin-frontend/src/pages/Login.jsx
 import React, { useState } from 'react';
+import { FiArrowRight, FiLayers, FiLock, FiMail, FiShield } from 'react-icons/fi';
 import { login } from '../api/contentApi';
 
 const Login = ({ onLogin }) => {
@@ -44,73 +45,102 @@ const Login = ({ onLogin }) => {
 
   return (
     <div className="admin-login">
-      <div className="login-container">
-        <div className="login-card">
-          <div className="login-header">
-            <div className="login-logo">
-              <i className="fas fa-hard-hat"></i>
-              <h1>BuildPort Admin</h1>
+      <main className="login-shell">
+        <section className="login-story" aria-label="BuildPort portfolio administration">
+          <div className="story-grid" aria-hidden="true" />
+          <div className="story-content">
+            <a className="brand-mark" href="/" aria-label="BuildPort home">
+              <span className="brand-icon"><FiLayers aria-hidden="true" /></span>
+              <span>BUILDPORT<span className="brand-divider">/</span>STUDIO</span>
+            </a>
+
+            <div className="story-copy">
+              <span className="story-kicker">YOUR WORK, WELL BUILT</span>
+              <h1>Make room for<br />what’s next.</h1>
+              <p>One considered space to shape your portfolio, share your projects, and keep your story moving.</p>
             </div>
-            <p>Manage your portfolio content</p>
+
+            <div className="story-note">
+              <span className="story-note-mark" aria-hidden="true" />
+              <span>Every detail makes a difference.</span>
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="login-form">
-            {error && (
-              <div className="login-error">
-                <i className="fas fa-exclamation-circle"></i>
-                {error}
-              </div>
-            )}
+          <div className="story-coordinate" aria-hidden="true">01 — 04</div>
+        </section>
 
-            <div className="form-group">
-              <label>
-                <i className="fas fa-envelope"></i>
-                Email Address
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={credentials.email}
-                onChange={handleChange}
-                placeholder="admin@buildport.com"
-                required
-                autoComplete="email"
-              />
-            </div>
+        <section className="login-panel">
+          <div className="login-panel-top">
+            <span className="login-panel-label">ADMIN PORTAL</span>
+            <span className="secure-label"><FiShield aria-hidden="true" /> Secure access</span>
+          </div>
 
-            <div className="form-group">
-              <label>
-                <i className="fas fa-lock"></i>
-                Password
-              </label>
-              <input
-                type="password"
-                name="password"
-                value={credentials.password}
-                onChange={handleChange}
-                placeholder="Enter your password"
-                required
-                autoComplete="current-password"
-              />
-            </div>
+          <div className="login-content">
+            <header className="login-header">
+              <span className="login-eyebrow">WELCOME BACK</span>
+              <h2>Sign in to your<br />workspace.</h2>
+              <p>Enter your details to manage your portfolio.</p>
+            </header>
 
-            <button type="submit" className="login-btn" disabled={loading}>
-              {loading ? (
-                <>
-                  <i className="fas fa-spinner fa-spin"></i>
-                  Logging in...
-                </>
-              ) : (
-                'Sign In'
+            <form onSubmit={handleSubmit} className="login-form">
+              {error && (
+                <div className="login-error" role="alert">
+                  <span>{error}</span>
+                </div>
               )}
-            </button>
-          </form>
 
-          <div className="login-footer">
-            <p>Demo: admin@buildport.com / admin123</p>
+              <div className="form-group">
+                <label htmlFor="login-email">Email address</label>
+                <div className="input-wrap">
+                  <FiMail className="input-icon" aria-hidden="true" />
+                  <input
+                    id="login-email"
+                    type="email"
+                    name="email"
+                    value={credentials.email}
+                    onChange={handleChange}
+                    placeholder="you@company.com"
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="login-password">Password</label>
+                <div className="input-wrap">
+                  <FiLock className="input-icon" aria-hidden="true" />
+                  <input
+                    id="login-password"
+                    type="password"
+                    name="password"
+                    value={credentials.password}
+                    onChange={handleChange}
+                    placeholder="Enter your password"
+                    required
+                    autoComplete="current-password"
+                  />
+                </div>
+              </div>
+
+              <button type="submit" className="login-btn" disabled={loading}>
+                <span>{loading ? 'Signing in…' : 'Sign in'}</span>
+                {!loading && <FiArrowRight aria-hidden="true" />}
+              </button>
+            </form>
+
+            <div className="login-demo">
+              <span className="demo-label">DEMO ACCESS</span>
+              <span>admin@buildport.com <span className="demo-separator">/</span> admin123</span>
+            </div>
+
+            <footer className="login-footer">
+              <span>© {new Date().getFullYear()} BuildPort Studio</span>
+              <span>Built to last.</span>
+            </footer>
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 };
