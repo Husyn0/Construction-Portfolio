@@ -134,6 +134,7 @@ const ContentManager = ({ onLogout, onBack }) => {
         sections={sections}
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
+        onDashboard={onBack}
         onLogout={onLogout}
       />
       

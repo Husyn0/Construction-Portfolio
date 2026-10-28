@@ -1,18 +1,15 @@
 // admin-frontend/src/pages/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { 
-  GoSignOut, 
-  GoHome, 
   GoGear, 
   GoTasklist, 
   GoPeople, 
   GoTools,
-  GoX,
   GoArrowRight
 } from "react-icons/go";
-import { FaBars } from "react-icons/fa";
 import { fetchAnalyticsData } from '../api/analyticsApi';
 import AnalyticsSection from '../components/analytics/AnalyticsSection';
+import Sidebar from '../components/Sidebar';
 
 const Dashboard = ({ onLogout, onNavigateToContentManager }) => {
   const [stats, setStats] = useState({
@@ -30,7 +27,6 @@ const Dashboard = ({ onLogout, onNavigateToContentManager }) => {
   });
   const [loading, setLoading] = useState(true);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   useEffect(() => {
     const loadStats = async () => {
@@ -71,14 +67,6 @@ const Dashboard = ({ onLogout, onNavigateToContentManager }) => {
     loadAnalytics();
   }, []);
 
-  const toggleSidebar = () => {
-    setIsMobileOpen(!isMobileOpen);
-  };
-
-  const closeSidebar = () => {
-    setIsMobileOpen(false);
-  };
-
   const statCards = [
     {
       title: 'Total Content Sections',
@@ -112,44 +100,13 @@ const Dashboard = ({ onLogout, onNavigateToContentManager }) => {
 
   return (
     <div className="admin-dashboard-wrapper">
-      {/* Sidebar Controller */}
-      <button className="sidebar-toggle" onClick={toggleSidebar}>
-        {isMobileOpen ? <GoX size={24} /> : <FaBars size={24} />}
-      </button>
-
-      {isMobileOpen && <div className="sidebar-overlay" onClick={closeSidebar}></div>}
-
-      {/* Sidebar */}
-      <div className={`dashboard-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
-        <div className="sidebar-header">
-          <div className="sidebar-logo">
-            <i className="fas fa-hard-hat"></i>
-            <span>BuildPort</span>
-          </div>
-          <p className="sidebar-subtitle">Admin Panel</p>
-        </div>
-
-        <nav className="sidebar-nav">
-          <button className="sidebar-item active">
-            <GoHome size={20} />
-            <span>Dashboard</span>
-          </button>
-          <button className="sidebar-item" onClick={() => {
-            onNavigateToContentManager();
-            closeSidebar();
-          }}>
-            <GoGear size={20} />
-            <span>Content Manager</span>
-          </button>
-        </nav>
-
-        <div className="sidebar-footer">
-          <button className="sidebar-item logout" onClick={onLogout}>
-            <GoSignOut size={20} />
-            <span>Logout</span>
-          </button>
-        </div>
-      </div>
+      <Sidebar
+        sections={[{ id: 'content', label: 'Content Manager' }]}
+        activeSection="dashboard"
+        onSectionChange={onNavigateToContentManager}
+        onLogout={onLogout}
+        sectionLabel="MANAGEMENT"
+      />
 
       <div className="dashboard-main">
         {/* Topbar */}

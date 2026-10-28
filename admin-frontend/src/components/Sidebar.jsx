@@ -1,89 +1,128 @@
-// src/admin/components/Sidebar.jsx
 import React, { useState } from 'react';
-import { 
-  GoSignOut, 
-  GoHome, 
-  GoGear, 
-  GoStar, 
-  GoInfo, 
-  GoTools, 
-  GoTasklist, 
-  GoPeople, 
-  GoMail,
-  GoX
-} from "react-icons/go";
-import { FaBars } from "react-icons/fa";
+import {
+  FiGrid,
+  FiInfo,
+  FiLayers,
+  FiLogOut,
+  FiMail,
+  FiMenu,
+  FiSettings,
+  FiStar,
+  FiTool,
+  FiUsers,
+  FiX
+} from 'react-icons/fi';
 
+const sectionIcons = {
+  about: FiInfo,
+  contact: FiMail,
+  dashboard: FiGrid,
+  hero: FiStar,
+  content: FiLayers,
+  projects: FiLayers,
+  services: FiTool,
+  team: FiUsers
+};
 
-const Sidebar = ({ sections, activeSection, onSectionChange, onLogout }) => {
+const Sidebar = ({
+  sections = [],
+  activeSection,
+  onSectionChange,
+  onDashboard,
+  onLogout,
+  sectionLabel = 'WEBSITE CONTENT'
+}) => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  const toggleSidebar = () => {
-    setIsMobileOpen(!isMobileOpen);
-  };
+  const closeSidebar = () => setIsMobileOpen(false);
 
-  const closeSidebar = () => {
-    setIsMobileOpen(false);
-  };
-
-  // Map section IDs to icons
-  const getSectionIcon = (sectionId) => {
-    const iconMap = {
-      hero: GoStar,
-      about: GoInfo,
-      services: GoTools,
-      projects: GoTasklist,
-      team: GoPeople,
-      contact: GoMail
-    };
-    return iconMap[sectionId] || GoGear;
+  const selectSection = (sectionId) => {
+    onSectionChange(sectionId);
+    closeSidebar();
   };
 
   return (
     <>
-      {/* Mobile Toggle Button */}
-      <button className="sidebar-toggle" onClick={toggleSidebar}>
-        {isMobileOpen ? <GoX size={24} /> : <FaBars size={24} />}
+      <button
+        className="sidebar-toggle"
+        type="button"
+        aria-label={isMobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
+        aria-expanded={isMobileOpen}
+        onClick={() => setIsMobileOpen((isOpen) => !isOpen)}
+      >
+        {isMobileOpen ? <FiX size={21} /> : <FiMenu size={21} />}
       </button>
 
-      {/* Overlay for mobile */}
-      {isMobileOpen && <div className="sidebar-overlay" onClick={closeSidebar}></div>}
+      {isMobileOpen && (
+        <button
+          className="sidebar-overlay"
+          type="button"
+          aria-label="Close navigation menu"
+          onClick={closeSidebar}
+        />
+      )}
 
-      <div className={`admin-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
-        <div className="sidebar-header">
-          <div className="sidebar-logo">
-            <i className="fas fa-hard-hat"></i>
-            <span>BuildPort</span>
+      <aside className={`admin-sidebar${isMobileOpen ? ' mobile-open' : ''}`}>
+        <a className="sidebar-brand" href="/" aria-label="BuildPort Studio home">
+          <span className="sidebar-brand-icon"><FiLayers aria-hidden="true" /></span>
+          <span className="sidebar-brand-name">BUILDPORT<span>/</span>STUDIO</span>
+        </a>
+
+        <div className="sidebar-workspace">
+          <span className="workspace-indicator" aria-hidden="true" />
+          <div>
+            <span className="workspace-title">Admin workspace</span>
+            <span className="workspace-caption">Portfolio management</span>
           </div>
-          <p className="sidebar-subtitle">Content Management</p>
         </div>
 
-        <nav className="sidebar-nav">
-          {sections.map(section => {
-            const Icon = getSectionIcon(section.id);
-            return (
-              <button
-                key={section.id}
-                className={`sidebar-item ${activeSection === section.id ? 'active' : ''}`}
-                onClick={() => {
-                  onSectionChange(section.id);
-                  closeSidebar();
-                }}
-              >
-                <Icon size={20} />
-                <span>{section.label}</span>
-              </button>
-            );
-          })}
+        <nav className="sidebar-nav" aria-label="Admin navigation">
+          <span className="sidebar-section-label">WORKSPACE</span>
+          <button
+            type="button"
+            className={`sidebar-item${activeSection === 'dashboard' ? ' active' : ''}`}
+            aria-current={activeSection === 'dashboard' ? 'page' : undefined}
+            onClick={() => {
+              if (onDashboard) onDashboard();
+              closeSidebar();
+            }}
+          >
+            <FiGrid aria-hidden="true" />
+            <span>Dashboard</span>
+          </button>
+
+          {sections.length > 0 && (
+            <>
+              <span className="sidebar-section-label">{sectionLabel}</span>
+              {sections.map((section) => {
+                const Icon = sectionIcons[section.id] || FiSettings;
+                const isActive = activeSection === section.id;
+
+                return (
+                  <button
+                    key={section.id}
+                    type="button"
+                    className={`sidebar-item${isActive ? ' active' : ''}`}
+                    aria-current={isActive ? 'page' : undefined}
+                    onClick={() => selectSection(section.id)}
+                  >
+                    <Icon aria-hidden="true" />
+                    <span>{section.label}</span>
+                  </button>
+                );
+              })}
+            </>
+          )}
         </nav>
 
         <div className="sidebar-footer">
-          <button className="sidebar-item logout" onClick={onLogout}>
-            <GoSignOut size={20} />
-            <span>Logout</span>
+          <button className="sidebar-item logout" type="button" onClick={onLogout}>
+            <FiLogOut aria-hidden="true" />
+            <span>Sign out</span>
           </button>
+          <span className="sidebar-footer-note">BUILT TO LAST</span>
         </div>
-      </div>
+      </aside>
     </>
   );
 };
